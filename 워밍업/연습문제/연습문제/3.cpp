@@ -5,13 +5,13 @@
 #include <regex>
 using namespace std;
 
-string func()
-{
-	smatch match;
-	int num = stoi(match[0].str()); 
-	num += 1; 
-	return to_string(num);
-}
+//string func()
+//{
+//	smatch match;
+//	int num = stoi(match[0].str()); 
+//	num += 1; 
+//	return to_string(num);
+//}
 
 int main()
 {
@@ -129,27 +129,110 @@ int main()
 
 		case '+':
 		{
-			regex numpattern("\\b\\d+\\b");
+			int tmpidx = 0;
 			for (int i = 0; i < v.size(); ++i)
 			{
-				v[i] = regex_replace(v[i], numpattern, [](const smatch& match)
+				int j = 0;
+				tmpidx = 0;
+				while (true)
+				{
+					if (j == v[i].size())
 					{
-						int num = stoi(match[0].str());
+						if (isdigit(v[i][j - 1]))
+						{
+							string str = v[i].substr(tmpidx, j - tmpidx);
+							v[i].erase(tmpidx, j - tmpidx);
+							int k = stoi(str);
+							k += 1;
+							v[i].insert(tmpidx, to_string(k));
+							if (k % 10 == 0) j += 1;
+						}
+						tmpidx = j + 1;
+
+						break;
+					}
+
+					if (v[i][j] == ' ')
+					{
+						if (isdigit(v[i][j - 1]))
+						{
+							string str = v[i].substr(tmpidx, j - tmpidx);
+							v[i].erase(tmpidx, j - tmpidx);
+							int k = stoi(str);
+							k += 1;
+							v[i].insert(tmpidx, to_string(k));
+							if (k % 10 == 0) j += 1;
+						}
+						tmpidx = j + 1;
+					}
+					j++;
+				}
+			}
+			break;
+			/*regex numpattern("\\b\\d+\\b");
+			for (int i = 0; i < v.size(); ++i)
+			{
+				v[i] = regex_replace(v[i], numpattern, [](const smatch& match) -> string
+					{
+						int num = stoi(match.str());
 						num += 1;
 						return to_string(num);
 					});
 			}
-			break;
+			break;*/
 		}
 			
 		case '-':
 		{
+			int tmpidx = 0;
+			for (int i = 0; i < v.size(); ++i)
+			{
+				int j = 0;
+				tmpidx = 0;
+				while (true)
+				{
+					if (j == v[i].size())
+					{
+						if (isdigit(v[i][j - 1]))
+						{
+							string str = v[i].substr(tmpidx, j - tmpidx);
+							v[i].erase(tmpidx, j - tmpidx);
+							int k = stoi(str);
+							if(k > 0)
+								k -= 1;
+							v[i].insert(tmpidx, to_string(k));
+							if (k % 9 == 0) j -= 1;
+						}
+						tmpidx = j + 1;
 
+						break;
+					}
+
+					if (v[i][j] == ' ')
+					{
+						if (isdigit(v[i][j - 1]))
+						{
+							string str = v[i].substr(tmpidx, j - tmpidx);
+							v[i].erase(tmpidx, j - tmpidx);
+							int k = stoi(str);
+							if (k > 0)
+								k -= 1;
+							v[i].insert(tmpidx, to_string(k));
+							if (k % 9 == 0 && k != 0) 
+								j -= 1;
+						}
+						tmpidx = j + 1;
+					}
+					j++;
+				}
+			}
+			break;
 		}
 			
 			break;
 
 		case 'q':
+			exit(0);
 			break;
 
 		case 'p':
