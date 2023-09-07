@@ -5,6 +5,14 @@
 #include <regex>
 using namespace std;
 
+string func()
+{
+	smatch match;
+	int num = stoi(match[0].str()); 
+	num += 1; 
+	return to_string(num);
+}
+
 int main()
 {
 	vector<string> v;
@@ -26,6 +34,7 @@ int main()
 
 	char c;
 	bool d = false, e = false, f = false;
+	char input1, input2;
 
 	while (true)
 	{
@@ -41,10 +50,17 @@ int main()
 		case 'e': // 토글로 만들어야 해 ㅠㅠ
 			if (e)
 			{
-
+				e = !e;
+				regex pattern("@{2,}");
+				for (int i = 0; i < v.size(); ++i)
+				{
+					v[i] = regex_replace(v[i], pattern, "");
+				}
+				
 			}
 			else
 			{
+				e = !e;
 				for (int i = 0; i < v.size(); ++i)
 				{
 					string temp = "";
@@ -85,17 +101,51 @@ int main()
 			}
 			break;
 			
-		case 'g':
+		case 'g': // 문자 내부의 특정 문자를 다른 문자로 바꾸기 d
+			cin >> input1 >> input2;
+
+			for (int i = 0; i < v.size(); ++i)
+			{
+				for (int j = 0; j < v[i].size(); ++j)
+				{
+					if (v[i][j] == input1)
+						v[i][j] = input2;
+				}
+			}
 			break;
 
-		case 'h':
+		case 'h': // 어디까지 같은 문자인지 출력
+			for (int i = 0; i < v.size(); ++i)
+			{
+				for (int j = 0; j < v[i].size() / 2; ++j)
+				{
+					if (v[i][j] == v[i][v[i].size() - j - 1])
+						cout << v[i][j];
+					else break;
+				}
+				cout << endl;
+			}
 			break;
 
 		case '+':
-			
+		{
+			regex numpattern("\\b\\d+\\b");
+			for (int i = 0; i < v.size(); ++i)
+			{
+				v[i] = regex_replace(v[i], numpattern, [](const smatch& match)
+					{
+						int num = stoi(match[0].str());
+						num += 1;
+						return to_string(num);
+					});
+			}
 			break;
+		}
 			
 		case '-':
+		{
+
+		}
 			
 			break;
 
