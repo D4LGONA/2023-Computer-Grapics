@@ -195,22 +195,92 @@ int main()
 				}
 			}
 			break;
+			
+		case 'i': // x축한칸확대
+			pt2.x++;
+
+			if (pt2.x >= maxX) pt2.x -= maxX;
+			for (int i = 0; i < maxY; ++i)
+			{
+				for (int j = 0; j < maxX; ++j)
+				{
+					if (j == pt2.x && board[i][pt1.x])
+						board[i][j] = true;
+				}
+			}
+			break;
+		case 'j': // x축한칸축소
+			if (pt1.x == pt2.x || pt1.y == pt2.y) break;
+
+			for (int i = 0; i < maxY; ++i)
+			{
+				for (int j = 0; j < maxX; ++j)
+				{
+					if (j == pt2.x) board[i][j] = false;
+				}
+			}
+
+			pt2.x--;
+			if (pt2.x < 0) pt2.x + maxX;
+			break;
+		case 'k': //y축한칸확대
+			pt2.y++;
+			if (pt2.y >= maxY) pt2.y -= maxY;
+			for (int i = 0; i < maxY; ++i)
+			{
+				for (int j = 0; j < maxX; ++j)
+				{
+					if (i == pt2.y && board[pt1.y][j])
+						board[i][j] = true;
+				}
+			}
+			break;
+		case 'l': // y축한칸축소
+			if (pt1.x == pt2.x || pt1.y == pt2.y) break;
+
+			for (int i = 0; i < maxY; ++i)
+			{
+				for (int j = 0; j < maxX; ++j)
+				{
+					if (i == pt2.y) board[i][j] = false;
+				}
+			}
+
+			pt2.y--;
+			if (pt2.y < 0) pt2.y + maxY;
+			break;
 
 		case 'r': // 리셋
+			system("cls");
+			reset();
+			while (true)
+			{
+				cin >> pt1.x >> pt1.y >> pt2.x >> pt2.y;
+				if (pt1.x <= pt2.x && pt1.y <= pt2.y && pt1.x >= 0 && pt2.x < maxX && pt1.y >= 0 && pt2.y < maxY)
+				{
+					for (int i = 0; i < maxY; ++i)
+					{
+						for (int j = 0; j < maxX; ++j)
+						{
+							if (i >= pt1.y && i <= pt2.y && j >= pt1.x && j <= pt2.x)
+								board[i][j] = true;
+							else
+								board[i][j] = false;
+						}
+					}
+					break;
+				}
+				else
+					cout << "다시 입력하세요" << endl;
+			}
 
 			break;
 		case 'q': // 종료
-
+			exit(0);
 			break;
 		default:
 			cout << "잘못된 입력입니다" << endl;
 			break;
 		}
-
-
-
 	}
-	
-
-
 }
