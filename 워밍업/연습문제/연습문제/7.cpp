@@ -87,9 +87,11 @@ void reset()
 		if (pts.size() == 0)
 		{
 			map[rpt.y][rpt.x] = 'X';
-			route.pop_back();
-			if(route.size() > 0)
+			if (route.size() > 0)
+			{
+				route.pop_back();
 				rpt = route.back();
+			}
 		}
 		else
 		{
@@ -166,7 +168,7 @@ int main()
 			{
 				pt.first = route[i];
 				draw();
-				Sleep(10);
+				//Sleep(20);
 			}
 			break;
 
