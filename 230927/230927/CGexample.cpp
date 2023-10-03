@@ -37,6 +37,7 @@ struct shape
 	int type = 0;
 	int idx = 0;
 };
+
 vector<shape> obj;
 int state = 0;
 
@@ -156,9 +157,42 @@ void makeObject(int x, int y) // 오픈지엘 좌표로 변환해서 받아오기
 	glBufferData(GL_ARRAY_BUFFER, sizeof(color) * v.c.size(), v.c.data(), GL_DYNAMIC_DRAW);
 }
 
+void Move(char c)
+{
+	switch (c)
+	{
+	case 'w':
+
+		for (int i = 0; i < v.pt.size(); ++i)
+			v.pt[i].y += 0.1;
+		break;
+	case 'a':
+
+		for (int i = 0; i < v.pt.size(); ++i)
+			v.pt[i].x -= 0.1;
+		break;
+	case 's':
+
+		for (int i = 0; i < v.pt.size(); ++i)
+			v.pt[i].y -= 0.1;
+		break;
+	case 'd':
+
+		for (int i = 0; i < v.pt.size(); ++i)
+			v.pt[i].x += 0.1;
+		break;
+	}
+
+
+	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * v.pt.size(), v.pt.data(), GL_DYNAMIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(color) * v.c.size(), v.c.data(), GL_DYNAMIC_DRAW);
+}
+
 GLvoid drawScene()
 {
-	glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glUseProgram(shaderProgramID);
 	glBindVertexArray(vao);
@@ -231,6 +265,11 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 		break;
 
 	case 'w': // 이동
+	case 'a':
+	case 's':
+	case 'd':
+		state = 1;
+		Move(key);
 		break;
 
 	case 'q': // 프로그램 종료
