@@ -3,8 +3,6 @@
 //random_device rd;
 //mt19937 dre(rd());
 //uniform_real_distribution<float> uidC{ 0.0f, 1.0f }; // 랜덤 컬러 생성
-//uniform_real_distribution<float> uidD{ -1.0f, 1.0f }; // 랜덤 방향 생성
-//uniform_int_distribution<int> uid{ 0,800 };
 //
 //GLuint vao, vbo[2];
 //
@@ -24,42 +22,29 @@
 //void InitBuffer();
 //char* filetobuf(const char*);
 //
-//color c;
-//vertex v; // 정점이 저장되어있는 녀석
-//vector<POINT> pts;
-//vector<POINT> pt;
-//vector<POINT> movept;
-//float angle = 0.0f;
-//float Radius = 0.0f;
-//bool start = false;
-//bool isbigger = true;
-//bool isline = true;
-//int n = 1;
-//int dotcount = 0;
-//vector<int> insertcount;
+//vertex v;
+//
+//enum types
+//{
+//	dot = 1,
+//	line = 2,
+//	triangle = 3,
+//	rectangle = 4,
+//	pentagon = 5
+//};
+//
+//struct shape
+//{
+//	int type = 0;
+//	int idx = 0;
+//};
+//
+//vector<shape> obj;
 //
 //pair<float, float> WintoOpenGL(int x, int y)
 //{
 //	pair<float, float> a = { x / 400. - 1, 1 - (y / 400.) };
 //	return a;
-//}
-//
-//void update()
-//{
-//	v.pt.clear();
-//	v.c.clear();
-//	
-//	for (int i = 0; i < pts.size(); ++i)
-//	{
-//		vec3 tmp = { WintoOpenGL(pts[i].x, pts[i].y).first, WintoOpenGL(pts[i].x, pts[i].y).second, 0.0f };
-//		v.pt.push_back(tmp);
-//		v.c.push_back({ 1.0f, 1.0f, 1.0f });
-//	}
-//
-//	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-//	glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * v.pt.size(), v.pt.data(), GL_DYNAMIC_DRAW);
-//	glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
-//	glBufferData(GL_ARRAY_BUFFER, sizeof(color) * v.c.size(), v.c.data(), GL_DYNAMIC_DRAW);
 //}
 //
 //void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
@@ -80,21 +65,143 @@
 //	glutMouseFunc(Mouse);
 //	glutMotionFunc(Motion);
 //	glutKeyboardFunc(Keyboard);
-//	glutTimerFunc(100, TimerFunction, 1);
+//
 //	glutMainLoop();
+//}
+//
+//void makeObject(int x, int y, int state) // 오픈지엘 좌표로 변환해서 받아오기
+//{
+//	switch (state)
+//	{
+//	case dot:
+//	{
+//		shape s{ dot, v.pt.size() };
+//		obj.push_back(s);
+//
+//		vec3 pt1 = { WintoOpenGL(x, y).first, WintoOpenGL(x, y).second, 0.0f };
+//		color c = { uidC(dre), uidC(dre), uidC(dre) };
+//
+//		v.pt.push_back(pt1);
+//
+//		v.c.push_back(c);
+//		break;
+//	}
+//	case line:
+//	{
+//		shape s{ line, v.pt.size() };
+//		obj.push_back(s);
+//
+//		vec3 pt1 = { WintoOpenGL(x - 20, y).first, WintoOpenGL(x - 20, y).second, 0.0f };
+//		vec3 pt2 = { WintoOpenGL(x + 20, y).first, WintoOpenGL(x + 20, y).second, 0.0f };
+//		color c = { uidC(dre), uidC(dre), uidC(dre) };
+//
+//		v.pt.push_back(pt1);
+//		v.pt.push_back(pt2);
+//
+//		v.c.push_back(c);
+//		v.c.push_back(c);
+//		break;
+//	}
+//	case triangle: 
+//	{
+//		shape s{ triangle, v.pt.size() };
+//		obj.push_back(s);
+//
+//		vec3 pt1 = { WintoOpenGL(x - 20, y + 20).first, WintoOpenGL(x - 20, y + 20).second, 0.0f };
+//		vec3 pt2 = { WintoOpenGL(x + 20, y + 20).first, WintoOpenGL(x + 20, y + 20).second, 0.0f };
+//		vec3 pt3 = { WintoOpenGL(x, y - 20).first, WintoOpenGL(x, y - 20).second, 0.0f };
+//		color c = { uidC(dre), uidC(dre), uidC(dre) };
+//
+//		v.pt.push_back(pt1);
+//		v.pt.push_back(pt2);
+//		v.pt.push_back(pt3);
+//
+//		v.c.push_back(c);
+//		v.c.push_back(c);
+//		v.c.push_back(c);
+//		break;
+//	}
+//	case rectangle:
+//	{
+//		shape s{ rectangle, v.pt.size() };
+//		obj.push_back(s);
+//
+//		vec3 pt1 = { WintoOpenGL(x - 20, y + 20).first, WintoOpenGL(x - 20, y + 20).second, 0.0f };
+//		vec3 pt2 = { WintoOpenGL(x + 20, y + 20).first, WintoOpenGL(x + 20, y + 20).second, 0.0f };
+//		vec3 pt4 = { WintoOpenGL(x - 20, y - 20).first, WintoOpenGL(x - 20, y - 20).second, 0.0f };
+//		vec3 pt3 = { WintoOpenGL(x + 20, y - 20).first, WintoOpenGL(x + 20, y - 20).second, 0.0f };
+//		color c = { uidC(dre), uidC(dre), uidC(dre) };
+//
+//		v.pt.push_back(pt1);
+//		v.pt.push_back(pt2);
+//		v.pt.push_back(pt4);
+//		v.pt.push_back(pt4);
+//		v.pt.push_back(pt2);
+//		v.pt.push_back(pt3);
+//
+//		v.c.push_back(c);
+//		v.c.push_back(c);
+//		v.c.push_back(c);
+//		v.c.push_back(c);
+//		v.c.push_back(c);
+//		v.c.push_back(c);
+//
+//		break;
+//	}
+//	}
+//	
+//
+//	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+//	glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * v.pt.size(), v.pt.data(), GL_DYNAMIC_DRAW);
+//	glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+//	glBufferData(GL_ARRAY_BUFFER, sizeof(color) * v.c.size(), v.c.data(), GL_DYNAMIC_DRAW);
+//}
+//
+//void Move(char c)
+//{
+//	switch (c)
+//	{
+//	case 'w':
+//
+//		for (int i = 0; i < v.pt.size(); ++i)
+//			v.pt[i].y += 0.1;
+//		break;
+//	case 'a':
+//
+//		for (int i = 0; i < v.pt.size(); ++i)
+//			v.pt[i].x -= 0.1;
+//		break;
+//	case 's':
+//
+//		for (int i = 0; i < v.pt.size(); ++i)
+//			v.pt[i].y -= 0.1;
+//		break;
+//	case 'd':
+//
+//		for (int i = 0; i < v.pt.size(); ++i)
+//			v.pt[i].x += 0.1;
+//		break;
+//	}
+//
+//
+//	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+//	glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * v.pt.size(), v.pt.data(), GL_DYNAMIC_DRAW);
+//	glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+//	glBufferData(GL_ARRAY_BUFFER, sizeof(color) * v.c.size(), v.c.data(), GL_DYNAMIC_DRAW);
 //}
 //
 //GLvoid drawScene()
 //{
-//	glClearColor(c.r, c.g, c.b, 1.0f);
+//	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 //	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 //	glUseProgram(shaderProgramID);
 //	glBindVertexArray(vao);
-//
+//	
 //	// Location 번호 저장
 //	int PosLocation = glGetAttribLocation(shaderProgramID, "in_Position"); //	: 0  Shader의 'layout (location = 0)' 부분
 //	int ColorLocation = glGetAttribLocation(shaderProgramID, "in_Color"); //	: 1
 //
+//	
 //	glEnableVertexAttribArray(PosLocation); // Enable 필수! 사용하겠단 의미
 //	glEnableVertexAttribArray(ColorLocation);
 //
@@ -102,20 +209,27 @@
 //	glVertexAttribPointer(PosLocation, 3, GL_FLOAT, GL_FALSE, sizeof(vec3), 0);
 //	glBindBuffer(GL_ARRAY_BUFFER, vbo[1]); // 색상 데이터용 VBO 바인딩
 //	glVertexAttribPointer(ColorLocation, 3, GL_FLOAT, GL_FALSE, sizeof(color), 0);
+//	
 //
-//	for (int i = 0; i < pts.size(); ++i)
+//	for (int i = 0; i < obj.size(); ++i)
 //	{
-//		if (isline)
+//		switch (obj[i].type)
 //		{
-//			if (i == pts.size() - 1 || i == (pts.size() / pt.size()) - 1 || i == (pts.size() * 2 / pt.size()) - 1 || i == (pts.size() * 3 / pt.size()) - 1 || i == (pts.size() * 4 / pt.size()) - 1)
-//				continue;
-//			glLineWidth(2.0f);
-//			glDrawArrays(GL_LINES, i, 2);
-//		}
-//		else
-//		{
-//			glPointSize(2.0f);
-//			glDrawArrays(GL_POINTS, i, 1);
+//		case dot:
+//			glPointSize(5.0f);
+//			glDrawArrays(GL_POINTS, obj[i].idx, 1);
+//			break;
+//		case line:
+//			glLineWidth(5.0f); // 라인 두께를 2.0f로 설정
+//			glDrawArrays(GL_LINES, obj[i].idx, 2);
+//			break;
+//		case triangle:
+//			glDrawArrays(GL_TRIANGLES, obj[i].idx, 3);
+//			break;
+//		case rectangle:
+//			glDrawArrays(GL_TRIANGLES, obj[i].idx, 3);
+//			glDrawArrays(GL_TRIANGLES, obj[i].idx + 3, 3);
+//			break;
 //		}
 //	}
 //
@@ -134,98 +248,45 @@
 //{
 //	switch (key)
 //	{
-//	case 'p':
-//		isline = false;
+//	case 'p':// 점 그리기
+//		state = dot;
 //		break;
 //
-//	case 'l':
-//		isline = true;
+//	case 'l': // 선 그리기
+//		state = line;
 //		break;
 //
-//	case '1':
-//		dotcount = 0;
-//		Radius = 0.0f;
-//		angle = 0.0f;
-//		pt.clear();
-//		movept.clear();
-//		pts.clear();
-//		insertcount.clear();
-//		isbigger = true;
-//		pt.push_back({ uid(dre), uid(dre) });
-//		start = true;
-//		insertcount.push_back(0);
+//	case 't': // 삼각형 그리기
+//		state = triangle;
 //		break;
-//	case '2':
-//		dotcount = 0;
-//		Radius = 0.0f;
-//		angle = 0.0f;
-//		pt.clear();
-//		movept.clear();
-//		pts.clear();
-//		insertcount.clear();
-//		isbigger = true;
-//		pt.push_back({ uid(dre), uid(dre) });
-//		pt.push_back({ uid(dre), uid(dre) });
-//		start = true;
-//		insertcount.push_back(0);
-//		insertcount.push_back(1);
+//
+//	case 'r': // 사각형 그리기
+//		state = rectangle;
 //		break;
-//	case '3':
-//		dotcount = 0;
-//		Radius = 0.0f;
-//		angle = 0.0f;
-//		pt.clear();
-//		movept.clear();
-//		pts.clear();
-//		insertcount.clear();
-//		isbigger = true;
-//		pt.push_back({ uid(dre), uid(dre) });
-//		pt.push_back({ uid(dre), uid(dre) });
-//		pt.push_back({ uid(dre), uid(dre) });
-//		start = true;
-//		insertcount.push_back(0);
-//		insertcount.push_back(1);
-//		insertcount.push_back(2);
+//
+//	case 'w': // 이동
+//	case 'a':
+//	case 's':
+//	case 'd':
+//		state = 1;
+//		Move(key);
 //		break;
-//	case '4':
-//		dotcount = 0;
-//		Radius = 0.0f;
-//		angle = 0.0f;
-//		pt.clear();
-//		movept.clear();
-//		pts.clear();
-//		insertcount.clear();
-//		isbigger = true;
-//		pt.push_back({ uid(dre), uid(dre) });
-//		pt.push_back({ uid(dre), uid(dre) });
-//		pt.push_back({ uid(dre), uid(dre) });
-//		pt.push_back({ uid(dre), uid(dre) });
-//		start = true;
-//		insertcount.push_back(0);
-//		insertcount.push_back(1);
-//		insertcount.push_back(2);
-//		insertcount.push_back(3);
+//
+//	case 'c':
+//
+//		v.pt.clear();
+//		v.c.clear();
+//
+//		obj.clear();
+//
+//		glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+//		glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * v.pt.size(), v.pt.data(), GL_DYNAMIC_DRAW);
+//		glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+//		glBufferData(GL_ARRAY_BUFFER, sizeof(color) * v.c.size(), v.c.data(), GL_DYNAMIC_DRAW);
 //		break;
-//	case '5':
-//		dotcount = 0;
-//		Radius = 0.0f;
-//		angle = 0.0f;
-//		pt.clear();
-//		movept.clear();
-//		pts.clear();
-//		insertcount.clear();
-//		isbigger = true;
-//		pt.push_back({ uid(dre), uid(dre) });
-//		pt.push_back({ uid(dre), uid(dre) });
-//		pt.push_back({ uid(dre), uid(dre) });
-//		pt.push_back({ uid(dre), uid(dre) });
-//		pt.push_back({ uid(dre), uid(dre) });
-//		start = true;
-//		insertcount.push_back(0);
-//		insertcount.push_back(1);
-//		insertcount.push_back(2);
-//		insertcount.push_back(3);
-//		insertcount.push_back(4);
+//
+//	case 'q': // 프로그램 종료
+//		exit(0);
 //		break;
 //	}
 //	glutPostRedisplay();
@@ -233,41 +294,6 @@
 //
 //GLvoid TimerFunction(int value)
 //{
-//	if (start)
-//	{
-//		if (isbigger)
-//		{
-//			angle += 10;
-//			Radius += 0.5f;
-//			for (int i = 0; i < pt.size(); ++i) 
-//			{
-//				pts.insert(pts.begin() + insertcount[i], {int(pt[i].x + Radius * cos(angle * 3.14f / 180)), int(pt[i].y + Radius * sin(angle * 3.14f / 180))});
-//				insertcount[i] += (i + 1);
-//			}
-//			if (angle > 360 * 3)
-//			{
-//				isbigger = false;
-//				angle += 180;
-//				for (int i = 0; i < pt.size(); ++i)
-//					movept.push_back({ int(pt[i].x + Radius * 2), pt[i].y });
-//			}
-//		}
-//		else
-//		{
-//			angle -= 10;
-//			Radius -= 0.5f;
-//			for (int i = 0; i < pt.size(); ++i)
-//			{
-//				pts.insert(pts.begin() + insertcount[i], { int(movept[i].x + Radius * cos(angle * 3.14f / 180)), int(movept[i].y + Radius * sin(angle * 3.14f / 180)) });
-//				insertcount[i] += (i + 1);
-//			}
-//			if (angle < 0 || Radius < 0)
-//				start = false;
-//		}
-//	}
-//
-//	update();
-//
 //	glutPostRedisplay();
 //	glutTimerFunc(100, TimerFunction, 1);
 //}
@@ -276,17 +302,7 @@
 //{
 //	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
 //	{
-//		c = { uidC(dre), uidC(dre), uidC(dre) };
-//		Radius = 0.0f;
-//		angle = 0.0f;
-//		start = true;
-//		pt.clear();
-//		movept.clear();
-//		pts.clear();
-//		insertcount.clear();
-//		isbigger = true;
-//		pt.push_back({ x, y });
-//		insertcount.push_back(0);
+//		makeObject(x, y);
 //	}
 //
 //	return GLvoid();
@@ -323,8 +339,8 @@
 //void make_vertexShaders()
 //{
 //	vertexSource = filetobuf("vertex.glsl");
-//	//--- 버텍스 세이더 객체 만들기
-//	vertexShader = glCreateShader(GL_VERTEX_SHADER);
+//		//--- 버텍스 세이더 객체 만들기
+//		vertexShader = glCreateShader(GL_VERTEX_SHADER);
 //	//--- 세이더 코드를 세이더 객체에 넣기
 //	glShaderSource(vertexShader, 1, (const GLchar**)&vertexSource, 0);
 //	//--- 버텍스 세이더 컴파일하기
@@ -333,7 +349,7 @@
 //	GLint result;
 //	GLchar errorLog[512];
 //	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &result);
-//	if (!result)
+//	if(!result)
 //	{
 //		glGetShaderInfoLog(vertexShader, 512, NULL, errorLog);
 //		std::cout << "ERROR: vertex shader 컴파일 실패\n" << errorLog << std::endl;

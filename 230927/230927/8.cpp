@@ -80,7 +80,7 @@
 //
 //		v.c.push_back(c);
 //		v.c.push_back(c);
-//		/////
+//		///
 //
 //		s = { line, int(v.pt.size()) };
 //		obj.push_back(s);
@@ -198,7 +198,7 @@
 //	glUseProgram(shaderProgramID);
 //	glBindVertexArray(vao);
 //
-//	// Location 번호 저장
+//	 //Location 번호 저장
 //	int PosLocation = glGetAttribLocation(shaderProgramID, "in_Position"); //	: 0  Shader의 'layout (location = 0)' 부분
 //	int ColorLocation = glGetAttribLocation(shaderProgramID, "in_Color"); //	: 1
 //
@@ -300,7 +300,7 @@
 //			v.pt[10] = { WintoOpenGL(x + scale, y + scale).first, WintoOpenGL(x + scale, y + scale).second };
 //			v.pt[11] = { WintoOpenGL(x, y - scale * 2).first, WintoOpenGL(x, y - scale * 2).second };
 //		}
-//		else if (x < 400 && y > 800) // 3사분면
+//		else if (x < 400 && y < 800) // 3사분면
 //		{
 //			scale = uidS(dre);
 //			v.pt[12] = { WintoOpenGL(x - scale, y + scale).first, WintoOpenGL(x - scale, y + scale).second };
