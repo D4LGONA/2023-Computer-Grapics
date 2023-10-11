@@ -3,6 +3,9 @@
 //random_device rd;
 //mt19937 dre(rd());
 //uniform_real_distribution<float> uidC{ 0.0f, 1.0f }; // 랜덤 컬러 생성
+//uniform_real_distribution<float> uidD{ -1.0f, 1.0f }; // 랜덤 방향 / 속도
+//uniform_int_distribution<int> uid{ 40, 760 };
+//uniform_int_distribution<int> uidA{ 1,5 };
 //
 //GLuint vao, vbo[2];
 //
@@ -22,29 +25,75 @@
 //void InitBuffer();
 //char* filetobuf(const char*);
 //
-//vertex v;
-//
-//enum types
-//{
-//	dot = 1,
-//	line = 2,
-//	triangle = 3,
-//	rectangle = 4,
-//	pentagon = 5
-//};
+//void makeObject(int, int, int);
 //
 //struct shape
 //{
-//	int type = 0;
+//	int angleCnt = 0;
 //	int idx = 0;
+//	pair<float, float> dir = { uidD(dre), uidD(dre) };
 //};
 //
-//vector<shape> obj;
+//vertex v; // vbo에 연결하는 애
+//vector<pair<POINT,color>> CENTER; // 가운데 점
+//vector<POINT> pts; // winapi 좌표계로 된 녀석
+//vector<shape> obj; // 어떤 녀석인지 알아보는 친구
+//POINT mousept;
+//int selected = -1;
+//bool isDrag = false;
 //
 //pair<float, float> WintoOpenGL(int x, int y)
 //{
 //	pair<float, float> a = { x / 400. - 1, 1 - (y / 400.) };
 //	return a;
+//}
+//
+//float dist(int x1, int y1, int x2, int y2)
+//{
+//	return sqrt(powf(x2 - x1, 2) + powf(y2 - y1, 2));
+//}
+//
+//void update()
+//{
+//	v.pt.clear();
+//	v.c.clear();
+//
+//	for (int i = 0; i < pts.size(); ++i)
+//	{
+//		vec3 tmp = { WintoOpenGL(pts[i].x, pts[i].y).first, WintoOpenGL(pts[i].x, pts[i].y).second, 0.0f };
+//		v.pt.push_back(tmp);
+//	}
+//	
+//	for (int i = 0; i < obj.size(); ++i)
+//	{
+//		for (int j = 0; j < obj[i].angleCnt; ++j)
+//			v.c.push_back(CENTER[i].second);
+//	}
+//
+//	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+//	glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * v.pt.size(), v.pt.data(), GL_DYNAMIC_DRAW);
+//	glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+//	glBufferData(GL_ARRAY_BUFFER, sizeof(color) * v.c.size(), v.c.data(), GL_DYNAMIC_DRAW);
+//}
+//
+//void deleteVertex(int idx, int i)
+//{
+//	// 지워야 하는 것: 합쳐지는 두 놈 데이터(pts) 둘다랑 center에 있는 
+//	// pt에 있는 녀석들중 idx인 부분부터 anglecnt 더한 위치까지
+// 	v.pt.erase(v.pt.begin() + idx, v.pt.begin() + idx + obj[i].angleCnt);
+//	v.c.erase(v.c.begin() + idx, v.c.begin() + idx + obj[i].angleCnt);
+//	//CENTER.erase()
+//}
+//
+//void makePolyObject(int x, int y, int sides, int idx)
+//{
+//	for (int i = 0; i < sides; ++i)
+//	{
+//		GLfloat angle = 2.0 * 3.14f * i / sides;
+//		int ax = x + 20 * cos(angle);
+//		int ay = y + 20 * sin(angle);
+//		pts.insert(pts.begin() + idx, {ax, ay});
+//	}
 //}
 //
 //void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
@@ -65,124 +114,71 @@
 //	glutMouseFunc(Mouse);
 //	glutMotionFunc(Motion);
 //	glutKeyboardFunc(Keyboard);
+//	glutTimerFunc(100, TimerFunction, 1);
+//	for (int i = 0; i < 15; ++i)
+//	{
+//		makeObject(uid(dre), uid(dre), uidA(dre));
+//	}
 //
 //	glutMainLoop();
 //}
 //
-//void makeObject(int x, int y, int state) // 오픈지엘 좌표로 변환해서 받아오기
+//void makeObject(int x, int y, int state) 
 //{
 //	switch (state)
 //	{
-//	case dot:
+//	case 1:
 //	{
-//		shape s{ dot, v.pt.size() };
+//		shape s{ 1, pts.size() };
 //		obj.push_back(s);
 //
-//		vec3 pt1 = { WintoOpenGL(x, y).first, WintoOpenGL(x, y).second, 0.0f };
 //		color c = { uidC(dre), uidC(dre), uidC(dre) };
-//
-//		v.pt.push_back(pt1);
-//
-//		v.c.push_back(c);
+//		pts.push_back({ x, y });
+//		CENTER.push_back({ {x, y}, c });
 //		break;
 //	}
-//	case line:
+//	case 2:
 //	{
-//		shape s{ line, v.pt.size() };
+//		shape s{ 2, pts.size() };
 //		obj.push_back(s);
 //
-//		vec3 pt1 = { WintoOpenGL(x - 20, y).first, WintoOpenGL(x - 20, y).second, 0.0f };
-//		vec3 pt2 = { WintoOpenGL(x + 20, y).first, WintoOpenGL(x + 20, y).second, 0.0f };
 //		color c = { uidC(dre), uidC(dre), uidC(dre) };
-//
-//		v.pt.push_back(pt1);
-//		v.pt.push_back(pt2);
-//
-//		v.c.push_back(c);
-//		v.c.push_back(c);
+//		makePolyObject(x, y, 2, obj.back().idx);
+//		CENTER.push_back({ {x, y}, c });
 //		break;
 //	}
-//	case triangle: 
+//	case 3: 
 //	{
-//		shape s{ triangle, v.pt.size() };
+//		shape s{ 3, pts.size() };
 //		obj.push_back(s);
 //
-//		vec3 pt1 = { WintoOpenGL(x - 20, y + 20).first, WintoOpenGL(x - 20, y + 20).second, 0.0f };
-//		vec3 pt2 = { WintoOpenGL(x + 20, y + 20).first, WintoOpenGL(x + 20, y + 20).second, 0.0f };
-//		vec3 pt3 = { WintoOpenGL(x, y - 20).first, WintoOpenGL(x, y - 20).second, 0.0f };
 //		color c = { uidC(dre), uidC(dre), uidC(dre) };
-//
-//		v.pt.push_back(pt1);
-//		v.pt.push_back(pt2);
-//		v.pt.push_back(pt3);
-//
-//		v.c.push_back(c);
-//		v.c.push_back(c);
-//		v.c.push_back(c);
+//		makePolyObject(x, y, 3, obj.back().idx);
+//		CENTER.push_back({ { x,y }, c });
 //		break;
 //	}
-//	case rectangle:
+//	case 4:
 //	{
-//		shape s{ rectangle, v.pt.size() };
+//		shape s{ 4, pts.size() };
 //		obj.push_back(s);
 //
-//		vec3 pt1 = { WintoOpenGL(x - 20, y + 20).first, WintoOpenGL(x - 20, y + 20).second, 0.0f };
-//		vec3 pt2 = { WintoOpenGL(x + 20, y + 20).first, WintoOpenGL(x + 20, y + 20).second, 0.0f };
-//		vec3 pt4 = { WintoOpenGL(x - 20, y - 20).first, WintoOpenGL(x - 20, y - 20).second, 0.0f };
-//		vec3 pt3 = { WintoOpenGL(x + 20, y - 20).first, WintoOpenGL(x + 20, y - 20).second, 0.0f };
 //		color c = { uidC(dre), uidC(dre), uidC(dre) };
+//		makePolyObject(x, y, 4, obj.back().idx);
+//		CENTER.push_back({ { x,y }, c });
+//		break;
+//	}
+//	case 5:
+//	{
+//		shape s{ 5, pts.size() };
+//		obj.push_back(s);
 //
-//		v.pt.push_back(pt1);
-//		v.pt.push_back(pt2);
-//		v.pt.push_back(pt4);
-//		v.pt.push_back(pt4);
-//		v.pt.push_back(pt2);
-//		v.pt.push_back(pt3);
-//
-//		v.c.push_back(c);
-//		v.c.push_back(c);
-//		v.c.push_back(c);
-//		v.c.push_back(c);
-//		v.c.push_back(c);
-//		v.c.push_back(c);
-//
+//		color c = { uidC(dre), uidC(dre), uidC(dre) };
+//		makePolyObject(x, y, 5, obj.back().idx);
+//		CENTER.push_back({ { x,y }, c });
 //		break;
 //	}
 //	}
 //	
-//
-//	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-//	glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * v.pt.size(), v.pt.data(), GL_DYNAMIC_DRAW);
-//	glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
-//	glBufferData(GL_ARRAY_BUFFER, sizeof(color) * v.c.size(), v.c.data(), GL_DYNAMIC_DRAW);
-//}
-//
-//void Move(char c)
-//{
-//	switch (c)
-//	{
-//	case 'w':
-//
-//		for (int i = 0; i < v.pt.size(); ++i)
-//			v.pt[i].y += 0.1;
-//		break;
-//	case 'a':
-//
-//		for (int i = 0; i < v.pt.size(); ++i)
-//			v.pt[i].x -= 0.1;
-//		break;
-//	case 's':
-//
-//		for (int i = 0; i < v.pt.size(); ++i)
-//			v.pt[i].y -= 0.1;
-//		break;
-//	case 'd':
-//
-//		for (int i = 0; i < v.pt.size(); ++i)
-//			v.pt[i].x += 0.1;
-//		break;
-//	}
-//
 //
 //	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
 //	glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * v.pt.size(), v.pt.data(), GL_DYNAMIC_DRAW);
@@ -213,24 +209,18 @@
 //
 //	for (int i = 0; i < obj.size(); ++i)
 //	{
-//		switch (obj[i].type)
+//		if (obj[i].angleCnt == 1)
 //		{
-//		case dot:
-//			glPointSize(5.0f);
-//			glDrawArrays(GL_POINTS, obj[i].idx, 1);
-//			break;
-//		case line:
-//			glLineWidth(5.0f); // 라인 두께를 2.0f로 설정
-//			glDrawArrays(GL_LINES, obj[i].idx, 2);
-//			break;
-//		case triangle:
-//			glDrawArrays(GL_TRIANGLES, obj[i].idx, 3);
-//			break;
-//		case rectangle:
-//			glDrawArrays(GL_TRIANGLES, obj[i].idx, 3);
-//			glDrawArrays(GL_TRIANGLES, obj[i].idx + 3, 3);
-//			break;
+//			glPointSize(4.0f);
+//			glDrawArrays(GL_POINTS, obj[i].idx, obj[i].angleCnt);
 //		}
+//		else if (obj[i].angleCnt == 2)
+//		{
+//			glLineWidth(4.0f);
+//			glDrawArrays(GL_LINES, obj[i].idx, obj[i].angleCnt);
+//		}
+//		else
+//			glDrawArrays(GL_POLYGON, obj[i].idx, obj[i].angleCnt);
 //	}
 //
 //	glDisableVertexAttribArray(PosLocation); // Disable 필수!
@@ -248,52 +238,53 @@
 //{
 //	switch (key)
 //	{
-//	case 'p':// 점 그리기
-//		state = dot;
-//		break;
-//
-//	case 'l': // 선 그리기
-//		state = line;
-//		break;
-//
-//	case 't': // 삼각형 그리기
-//		state = triangle;
-//		break;
-//
-//	case 'r': // 사각형 그리기
-//		state = rectangle;
-//		break;
-//
-//	case 'w': // 이동
-//	case 'a':
-//	case 's':
-//	case 'd':
-//		state = 1;
-//		Move(key);
-//		break;
-//
 //	case 'c':
-//
 //		v.pt.clear();
 //		v.c.clear();
 //
 //		obj.clear();
-//
-//		glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-//		glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * v.pt.size(), v.pt.data(), GL_DYNAMIC_DRAW);
-//		glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
-//		glBufferData(GL_ARRAY_BUFFER, sizeof(color) * v.c.size(), v.c.data(), GL_DYNAMIC_DRAW);
 //		break;
 //
 //	case 'q': // 프로그램 종료
 //		exit(0);
 //		break;
 //	}
+//	update();
 //	glutPostRedisplay();
 //}
 //
 //GLvoid TimerFunction(int value)
 //{
+//	for (int i = 0; i < obj.size(); ++i)
+//	{
+//		if (i == selected) continue;
+//		bool ischangedX = false;
+//		bool ischangedY = false;
+//		CENTER[i].first.x += obj[i].dir.first * 10;
+//		CENTER[i].first.y += obj[i].dir.second * 10;
+//		for (int j = obj[i].idx; j < obj[i].idx + obj[i].angleCnt; ++j)
+//		{
+//			pts[j].x += obj[i].dir.first * 10;
+//			pts[j].y += obj[i].dir.second * 10;
+//		}
+//		for (int j = obj[i].idx; j < obj[i].idx + obj[i].angleCnt; ++j)
+//		{
+//			if (!ischangedX && (pts[j].x - 15 <= 0 || pts[j].x + 15 >= 800))
+//			{
+//				obj[i].dir.first *= -1;
+//				ischangedX = true;
+//			}
+//			if (!ischangedY && (pts[j].y - 15 <= 0 || pts[j].y + 15 >= 800))
+//			{
+//				obj[i].dir.second *= -1;
+//				ischangedY = true;
+//			}
+//		}
+//	}
+//	
+//	cout << selected << endl;
+//
+//	update();
 //	glutPostRedisplay();
 //	glutTimerFunc(100, TimerFunction, 1);
 //}
@@ -302,14 +293,96 @@
 //{
 //	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
 //	{
-//		makeObject(x, y);
+//		mousept = { x,y };
+//		isDrag = true;
+//		for (int i = 0; i < obj.size(); ++i)
+//		{
+//			if (dist(CENTER[i].first.x, CENTER[i].first.y, x, y) < 50)
+//			{
+//				selected = i;
+//				break;
+//			}
+//		}
+//	}
+//	else if (button == GLUT_LEFT_BUTTON && state == GLUT_UP && selected != -1)
+//	{
+//		for (int i = 0; i < obj.size(); ++i)
+//		{
+//			if (i == selected) continue;
+//			if (dist(CENTER[selected].first.x, CENTER[selected].first.y, CENTER[i].first.x, CENTER[i].first.y) < 20)
+//			{
+//				int slices = obj[i].angleCnt + obj[selected].angleCnt;
+//				POINT tmp = { CENTER[selected].first.x, CENTER[selected].first.y };
+//				// pts 건들고
+//				if (selected < i)
+//				{
+//					pts.erase(pts.begin() + obj[selected].idx, pts.begin() + obj[selected].idx + obj[selected].angleCnt);
+//					pts.erase(pts.begin() + (obj[i].idx - obj[selected].angleCnt), pts.begin() + (obj[i].idx + obj[i].angleCnt - obj[selected].angleCnt));
+//
+//					CENTER.erase(CENTER.begin() + selected);
+//					CENTER.erase(CENTER.begin() + i - 1);
+//
+//					for (int j = selected + 1; j < obj.size(); ++j)
+//						obj[j].idx -= obj[selected].angleCnt;
+//					for (int j = i + 1; j < obj.size(); ++j)
+//						obj[j].idx -= obj[i].angleCnt;
+//
+//					obj.erase(obj.begin() + selected);
+//					obj.erase(obj.begin() + i - 1);
+//				}
+//				else
+//				{
+//					pts.erase(pts.begin() + obj[i].idx, pts.begin() + obj[i].idx + obj[i].angleCnt);
+//					pts.erase(pts.begin() + (obj[selected].idx - obj[i].angleCnt), pts.begin() + (obj[selected].idx + obj[selected].angleCnt - obj[i].angleCnt));
+//
+//					CENTER.erase(CENTER.begin() + i);
+//					CENTER.erase(CENTER.begin() + selected - 1);
+//
+//					for (int j = selected + 1; j < obj.size(); ++j)
+//						obj[j].idx -= obj[selected].angleCnt;
+//					for (int j = i + 1; j < obj.size(); ++j)
+//						obj[j].idx -= obj[i].angleCnt;
+//
+//					obj.erase(obj.begin() + i);
+//					obj.erase(obj.begin() + selected - 1);
+//				}
+//
+//				// 새 도형 추가
+//				shape s{ slices, pts.size() };
+//				obj.push_back(s);
+//
+//				color c = { uidC(dre), uidC(dre), uidC(dre) };
+//				makePolyObject(tmp.x, tmp.y, slices, obj.back().idx);
+//				CENTER.push_back({ { tmp.x, tmp.y }, c });
+//
+//				cout << "닿았음" << endl;
+//			}
+//		}
+//
+//
+//
+//		selected = -1;
+//		isDrag = false;
 //	}
 //
+//	update();
 //	return GLvoid();
 //}
 //
 //GLvoid Motion(int x, int y)
 //{
+//	if (isDrag && selected != -1)
+//	{
+//		for (int i = obj[selected].idx; i < obj[selected].idx + obj[selected].angleCnt; ++i)
+//		{
+//			pts[i].x += x - mousept.x;
+//			pts[i].y += y - mousept.y;
+//		}
+//		CENTER[selected].first.x += x - mousept.x;
+//		CENTER[selected].first.y += y - mousept.y;
+//
+//		mousept = { x, y };
+//	}
 //	glutPostRedisplay();
 //}
 //

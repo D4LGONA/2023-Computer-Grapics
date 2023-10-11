@@ -16,20 +16,6 @@
 #include <gl/glm/gtc/matrix_transform.hpp>
 using namespace std;
 
-struct color
-{
-	GLfloat r;
-	GLfloat g;
-	GLfloat b;
-};
-
-struct vec3
-{
-	GLfloat x;
-	GLfloat y;
-	GLfloat z;
-};
-
 struct vertex
 {
 	vector<glm::vec3> pt;

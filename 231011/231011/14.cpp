@@ -4,7 +4,7 @@ random_device rd;
 mt19937 dre(rd());
 uniform_real_distribution<float> uidC{ 0.0f, 1.0f }; // 랜덤 컬러 생성
 
-GLuint vao, vbo[2];
+GLuint vao, vbo[2], ebo;
 
 GLchar* vertexSource, * fragmentSource; //--- 소스코드 저장 변수
 GLuint vertexShader, fragmentShader; //--- 세이더 객체
@@ -22,26 +22,38 @@ GLvoid Motion(int x, int y);
 void InitBuffer();
 char* filetobuf(const char*);
 
-vertex v;
+vector<glm::vec3> v = { // 고장남 근데 귀찮
+	{-0.25f, 0.25f, -0.25f}, {-0.25f, -0.25f, -0.25f}, {0.25f, -0.25f, -0.25f},
+	{-0.25f, 0.25f, -0.25f}, {0.25f, -0.25f, -0.25f}, {0.25f, 0.25f, -0.25f}, // 면 1
+	{0.25f, 0.25f, -0.25f}, {0.25f, -0.25f, -0.25f}, {0.25f, -0.25f, -0.75f},
+	{0.25f, 0.25f, -0.25f}, {0.25f, -0.25f, -0.75f}, {0.25f, 0.25f, -0.75f}, // 면 2
+	{0.25f, 0.25f, -0.75f}, {0.25f, -0.25f, -0.75f}, {-0.25f, -0.25f, -0.75f},
+	{0.25f, 0.25f, -0.75f}, {-0.25f, -0.25f, -0.75f}, {-0.25f, 0.25f, -0.75f}, // 면 3
+	{-0.25f, 0.25f, -0.75f}, {-0.25f, -0.25f, -0.75f}, {-0.25f, 0.25f, -0.25f},
+	{-0.25f, 0.25f, -0.75f}, {-0.25f, -0.25f, -0.25f}, {-0.25f, 0.25f, -0.25f}, // 면 4
+	{-0.25f, 0.25f, -0.75f}, {-0.25f, 0.25f, -0.25f}, {0.25f, 0.25f, -0.25f},
+	{-0.25f, 0.25f, -0.75f}, {0.25f, 0.25f, -0.25f}, {0.25f, 0.25f, -0.75f}, // 면 5
+	{-0.25f, -0.25f, -0.75f}, {-0.25f, -0.25f, -0.25f}, {0.25f, -0.25f, -0.25f},
+	{-0.25f, -0.25f, -0.75f}, {0.25f, -0.25f, -0.25f}, {0.25f, -0.25f, -0.75f} // 면 6
+};
+vector<glm::vec3> c = { 
+	{1.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f},
+	{1.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f},
+	{0.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 0.0f},
+	{0.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 0.0f},
+	{0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f},
+	{0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f},
+	{0.0f, 1.0f, 1.0f}, {0.0f, 1.0f, 1.0f}, {0.0f, 1.0f, 1.0f},
+	{0.0f, 1.0f, 1.0f}, {0.0f, 1.0f, 1.0f}, {0.0f, 1.0f, 1.0f},
+	{1.0f, 1.0f, 0.0f}, {1.0f, 1.0f, 0.0f}, {1.0f, 1.0f, 0.0f},
+	{1.0f, 1.0f, 0.0f}, {1.0f, 1.0f, 0.0f}, {1.0f, 1.0f, 0.0f},
+	{1.0f, 0.0f, 1.0f}, {1.0f, 0.0f, 1.0f}, {1.0f, 0.0f, 1.0f},
+	{1.0f, 0.0f, 1.0f}, {1.0f, 0.0f, 1.0f}, {1.0f, 0.0f, 1.0f}
+};
 POINT mousept;
 
-enum types
-{
-	dot = 1,
-	line = 2,
-	triangle = 3,
-	rectangle = 4,
-	pentagon = 5
-};
-
-struct shape
-{
-	int type = 0;
-	int idx = 0;
-};
-
-vector<POINT> pts;
-bool drag = false;
+int angle = 30;
+glm::vec3 transition{ 0.0f,0.0f,0.0f };
 
 pair<float, float> WintoOpenGL(int x, int y)
 {
@@ -56,43 +68,20 @@ float dist(int x1, int y1, int x2, int y2)
 
 void update()
 {
-	v.pt.clear();
-	
-		for (int i = 0; i < pts.size(); ++i)
-		{
-			glm::vec3 tmp = { WintoOpenGL(pts[i].x, pts[i].y).first, WintoOpenGL(pts[i].x, pts[i].y).second, 0.0f };
-			v.pt.push_back(tmp);
-		}
 
-	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * v.pt.size(), v.pt.data(), GL_DYNAMIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * v.c.size(), v.c.data(), GL_DYNAMIC_DRAW);
 }
 
 void Reset()
 {
-	pts.push_back({100, 100});
-	v.c.push_back({ uidC(dre), uidC(dre), uidC(dre) });
-	pts.push_back({100, 500});
-	v.c.push_back({ uidC(dre), uidC(dre), uidC(dre) });
-	pts.push_back({700, 500});
-	v.c.push_back({ uidC(dre), uidC(dre), uidC(dre) });
-	pts.push_back({700, 100});
-	v.c.push_back({ uidC(dre), uidC(dre), uidC(dre) });
-	pts.push_back({100, 100});
-	v.c.push_back({ uidC(dre), uidC(dre), uidC(dre) });
-
-	update();
 }
 
 void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 {
 	//--- 윈도우 생성하기
 	glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
 	glutInitWindowPosition(100, 100);
-	glutInitWindowSize(800, 600);
+	glutInitWindowSize(800, 800);
 	glutCreateWindow("Example1");
 	//--- GLEW 초기화하기
 	glewExperimental = GL_TRUE;
@@ -105,6 +94,7 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	glutMotionFunc(Motion);
 	glutKeyboardFunc(Keyboard);
 	Reset();
+	glEnable(GL_DEPTH_TEST);
 	glutMainLoop();
 }
 
@@ -114,12 +104,17 @@ GLvoid drawScene()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glUseProgram(shaderProgramID);
 	glBindVertexArray(vao);
-	
+
+	glm::mat4 model = glm::mat4(1.0f);
+	model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+	model = glm::rotate(model, glm::radians(float(angle)), glm::vec3(1.0f, 1.0f, 0.0f));
+
 	// Location 번호 저장
 	int PosLocation = glGetAttribLocation(shaderProgramID, "in_Position"); //	: 0  Shader의 'layout (location = 0)' 부분
 	int ColorLocation = glGetAttribLocation(shaderProgramID, "in_Color"); //	: 1
+	unsigned int modelLocation = glGetUniformLocation(shaderProgramID, "transform");
 
-	
+
 	glEnableVertexAttribArray(PosLocation); // Enable 필수! 사용하겠단 의미
 	glEnableVertexAttribArray(ColorLocation);
 
@@ -127,12 +122,11 @@ GLvoid drawScene()
 	glVertexAttribPointer(PosLocation, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), 0);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo[1]); // 색상 데이터용 VBO 바인딩
 	glVertexAttribPointer(ColorLocation, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), 0);
-	
-	for (int i = 0; i < pts.size() - 1; ++i)
-	{
-		glLineWidth(5.0f);
-		glDrawArrays(GL_LINES, i, 2);
-	}
+
+	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
+
+	for (int i = 0; i < v.size(); i += 6)
+		glDrawArrays(GL_TRIANGLES, i, 6);
 
 	glDisableVertexAttribArray(PosLocation); // Disable 필수!
 	glDisableVertexAttribArray(ColorLocation);
@@ -149,6 +143,35 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 {
 	switch (key)
 	{
+	case '1':
+		break;
+	case '2':
+		break;
+	case '3':
+		break;
+	case '4':
+		break;
+	case '5':
+		break;
+	case '6':
+		break;
+
+
+	case '7':
+		break;
+	case '8':
+		break;
+	case '9':
+		break;
+	case '0':
+		break;
+
+	case 't':
+		break;
+
+	case 'c':
+		break;
+
 	case 'q': // 프로그램 종료
 		exit(0);
 		break;
@@ -166,12 +189,9 @@ GLvoid Mouse(int button, int state, int x, int y)
 {
 	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
 	{
-		drag = true;
-		mousept = { x, y };
 	}
 	else if (button == GLUT_LEFT_BUTTON && state == GLUT_UP)
 	{
-		drag = false;
 	}
 
 	return GLvoid();
@@ -179,56 +199,36 @@ GLvoid Mouse(int button, int state, int x, int y)
 
 GLvoid Motion(int x, int y)
 {
-	if (drag)
-	{
-		bool isdraged = false;
-		for (int i = 0; i < pts.size(); ++i)
-		{
-			if (dist(pts[i].x, pts[i].y, x, y) < 50)
-			{
-				pts[i].x += x - mousept.x;
-				pts[i].y += y - mousept.y;
-				isdraged = true;
-			}
-		}
-
-		if (!isdraged)
-		{
-			POINT pt1{ pts[0].x, pts[0].y },pt2{ pts[0].x, pts[0].y };
-			// x1 y1 최소점 x2y2 최대점
-			for (int i = 1; i < pts.size() - 1; ++i)
-			{
-				if (pts[i].x < pt1.x) pt1.x = pts[i].x;
-				if (pts[i].y < pt1.y) pt1.y = pts[i].y;
-				if (pts[i].x > pt2.x) pt2.x = pts[i].x;
-				if (pts[i].y > pt2.y) pt2.y = pts[i].y;
-			}
-			RECT tmp = { pt1.x, pt1.y, pt2.x, pt2.y };
-			if (PtInRect(&tmp, { x, y }))
-			{
-				for (int i = 0; i < pts.size(); ++i)
-				{
-					pts[i].x += x - mousept.x;
-					pts[i].y += y - mousept.y;
-				}
-			}
-		}
-
-
-		mousept = { x, y };
-		update();
-	}
-
 
 	glutPostRedisplay();
 }
 
 void InitBuffer()
 {
-	glGenVertexArrays(1, &vao); //--- VAO 를 지정하고 할당하기
-	glBindVertexArray(vao); //--- VAO를 바인드하기
-	glGenBuffers(2, vbo); //--- 2개의 VBO를 지정하고 할당하기
+	glGenVertexArrays(1, &vao); // VAO를 생성하고 할당합니다.
+	glBindVertexArray(vao); // VAO를 바인드합니다.
+	glGenBuffers(2, vbo); // 2개의 VBO를 생성하고 할당합니다.
+
+	// 첫 번째 VBO에 정점 좌표 데이터를 설정합니다.
+	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * v.size(), v.data(), GL_STATIC_DRAW);
+
+	// 두 번째 VBO에 색상 데이터를 설정합니다.
+	glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * c.size(), c.data(), GL_STATIC_DRAW);
+
+	// 정점 좌표 데이터를 VAO에 바인딩하고 활성화합니다.
+	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(0);
+
+	// 색상 데이터를 VAO에 바인딩하고 활성화합니다.
+	glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(1);
 }
+
+
 
 void make_shaderProgram()
 {
@@ -249,8 +249,8 @@ void make_shaderProgram()
 void make_vertexShaders()
 {
 	vertexSource = filetobuf("vertex.glsl");
-		//--- 버텍스 세이더 객체 만들기
-		vertexShader = glCreateShader(GL_VERTEX_SHADER);
+	//--- 버텍스 세이더 객체 만들기
+	vertexShader = glCreateShader(GL_VERTEX_SHADER);
 	//--- 세이더 코드를 세이더 객체에 넣기
 	glShaderSource(vertexShader, 1, (const GLchar**)&vertexSource, 0);
 	//--- 버텍스 세이더 컴파일하기
@@ -259,7 +259,7 @@ void make_vertexShaders()
 	GLint result;
 	GLchar errorLog[512];
 	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &result);
-	if(!result)
+	if (!result)
 	{
 		glGetShaderInfoLog(vertexShader, 512, NULL, errorLog);
 		std::cout << "ERROR: vertex shader 컴파일 실패\n" << errorLog << std::endl;
