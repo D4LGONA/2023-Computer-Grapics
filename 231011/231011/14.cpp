@@ -3,6 +3,8 @@
 random_device rd;
 mt19937 dre(rd());
 uniform_real_distribution<float> uidC{ 0.0f, 1.0f }; // 랜덤 컬러 생성
+uniform_int_distribution<int> uid{ 0,5 };
+uniform_int_distribution<int> uid2{ 0,3 };
 
 GLuint vao, vbo[2], ebo;
 
@@ -30,11 +32,16 @@ vector<glm::vec3> v = { // 고장남 근데 귀찮
 	{0.25f, 0.25f, -0.75f}, {0.25f, -0.25f, -0.75f}, {-0.25f, -0.25f, -0.75f},
 	{0.25f, 0.25f, -0.75f}, {-0.25f, -0.25f, -0.75f}, {-0.25f, 0.25f, -0.75f}, // 면 3
 	{-0.25f, 0.25f, -0.75f}, {-0.25f, -0.25f, -0.75f}, {-0.25f, 0.25f, -0.25f},
-	{-0.25f, 0.25f, -0.75f}, {-0.25f, -0.25f, -0.25f}, {-0.25f, 0.25f, -0.25f}, // 면 4
+	{-0.25f, -0.25f, -0.75f}, {-0.25f, -0.25f, -0.25f}, {-0.25f, 0.25f, -0.25f}, // 면 4
 	{-0.25f, 0.25f, -0.75f}, {-0.25f, 0.25f, -0.25f}, {0.25f, 0.25f, -0.25f},
 	{-0.25f, 0.25f, -0.75f}, {0.25f, 0.25f, -0.25f}, {0.25f, 0.25f, -0.75f}, // 면 5
 	{-0.25f, -0.25f, -0.75f}, {-0.25f, -0.25f, -0.25f}, {0.25f, -0.25f, -0.25f},
-	{-0.25f, -0.25f, -0.75f}, {0.25f, -0.25f, -0.25f}, {0.25f, -0.25f, -0.75f} // 면 6
+	{-0.25f, -0.25f, -0.75f}, {0.25f, -0.25f, -0.25f}, {0.25f, -0.25f, -0.75f}, // 면 6
+	// 사면체
+	{-0.25f, 0.25f, -0.25f}, {-0.25f, -0.25f, -0.25f}, {0.25f, -0.25f, -0.25f},
+	{-0.25f, -0.25f, -0.75f}, {-0.25f, -0.25f, -0.25f}, {-0.25f, 0.25f, -0.25f},
+	{-0.25f, -0.25f, -0.75f}, {-0.25f, -0.25f, -0.25f}, {0.25f, -0.25f, -0.25f},
+	{-0.25f, 0.25f, -0.25f}, {-0.25f, -0.25f, -0.75f}, {0.25f, -0.25f, -0.25f}
 };
 vector<glm::vec3> c = { 
 	{1.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f},
@@ -48,12 +55,20 @@ vector<glm::vec3> c = {
 	{1.0f, 1.0f, 0.0f}, {1.0f, 1.0f, 0.0f}, {1.0f, 1.0f, 0.0f},
 	{1.0f, 1.0f, 0.0f}, {1.0f, 1.0f, 0.0f}, {1.0f, 1.0f, 0.0f},
 	{1.0f, 0.0f, 1.0f}, {1.0f, 0.0f, 1.0f}, {1.0f, 0.0f, 1.0f},
-	{1.0f, 0.0f, 1.0f}, {1.0f, 0.0f, 1.0f}, {1.0f, 0.0f, 1.0f}
+	{1.0f, 0.0f, 1.0f}, {1.0f, 0.0f, 1.0f}, {1.0f, 0.0f, 1.0f},
+
+	{1.0f, 1.0f, 0.0f}, {1.0f, 1.0f, 0.0f}, {1.0f, 1.0f, 0.0f},
+	{1.0f, 0.0f, 1.0f}, {1.0f, 0.0f, 1.0f}, {1.0f, 0.0f, 1.0f},
+	{0.0f, 1.0f, 1.0f}, {0.0f, 1.0f, 1.0f}, {0.0f, 1.0f, 1.0f},
+	{0.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 0.0f},
 };
 POINT mousept;
 
 int angle = 30;
 glm::vec3 transition{ 0.0f,0.0f,0.0f };
+bool arr[6]{ true, true, true, true, true, true };
+bool isRect = true;
+bool arr2[4]{ true, true, true, true };
 
 pair<float, float> WintoOpenGL(int x, int y)
 {
@@ -104,10 +119,12 @@ GLvoid drawScene()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glUseProgram(shaderProgramID);
 	glBindVertexArray(vao);
+	//angle += 10;
 
 	glm::mat4 model = glm::mat4(1.0f);
 	model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
 	model = glm::rotate(model, glm::radians(float(angle)), glm::vec3(1.0f, 1.0f, 0.0f));
+
 
 	// Location 번호 저장
 	int PosLocation = glGetAttribLocation(shaderProgramID, "in_Position"); //	: 0  Shader의 'layout (location = 0)' 부분
@@ -125,8 +142,22 @@ GLvoid drawScene()
 
 	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
 
-	for (int i = 0; i < v.size(); i += 6)
-		glDrawArrays(GL_TRIANGLES, i, 6);
+	for (int i = 0; i < v.size(); i += 3)
+	{
+		if (isRect) // 정육면체 그리기
+		{
+			if (i >= 36) break;
+			if(arr[i / 6])
+				glDrawArrays(GL_TRIANGLES, i, 3);
+
+		}
+		else
+		{
+			if (i < 36) continue;
+			if (arr2[(i - 36) / 3])
+				glDrawArrays(GL_TRIANGLES, i, 3);
+		}
+	}
 
 	glDisableVertexAttribArray(PosLocation); // Disable 필수!
 	glDisableVertexAttribArray(ColorLocation);
@@ -144,32 +175,98 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 	switch (key)
 	{
 	case '1':
+		isRect = true;
+		for (int i = 0; i < 6; ++i)
+			arr[i] = false;
+		arr[0] = true;
 		break;
 	case '2':
+		isRect = true;
+		for (int i = 0; i < 6; ++i)
+			arr[i] = false;
+		arr[1] = true;
 		break;
 	case '3':
+		isRect = true;
+		for (int i = 0; i < 6; ++i)
+			arr[i] = false;
+		arr[2] = true;
 		break;
 	case '4':
+		isRect = true;
+		for (int i = 0; i < 6; ++i)
+			arr[i] = false;
+		arr[3] = true;
 		break;
 	case '5':
+		isRect = true;
+		for (int i = 0; i < 6; ++i)
+			arr[i] = false;
+		arr[4] = true;
 		break;
 	case '6':
+		isRect = true;
+		for (int i = 0; i < 6; ++i)
+			arr[i] = false;
+		arr[5] = true;
 		break;
 
 
 	case '7':
+		isRect = false;
+		for (int i = 0; i < 4; ++i)
+			arr2[i] = false;
+		arr2[0] = true;
 		break;
 	case '8':
+		isRect = false;
+		for (int i = 0; i < 4; ++i)
+			arr2[i] = false;
+		arr2[1] = true;
 		break;
 	case '9':
+		isRect = false;
+		for (int i = 0; i < 4; ++i)
+			arr2[i] = false;
+		arr2[2] = true;
 		break;
 	case '0':
+		isRect = false;
+		for (int i = 0; i < 4; ++i)
+			arr2[i] = false;
+		arr2[3] = true;
 		break;
 
 	case 't':
+		isRect = true;
+		for (int i = 0; i < 6; ++i)
+			arr[i] = false;
+		arr[uid(dre)] = true;
+		while (true)
+		{
+			int a = uid(dre);
+			if (!arr[a])
+			{
+				arr[a] = true;
+				break;
+			}
+		}
 		break;
 
 	case 'c':
+		isRect = false;
+		for (int i = 0; i < 4; ++i)
+			arr2[i] = false;
+		arr2[uid2(dre)] = true;
+		while (true)
+		{
+			int a = uid2(dre);
+			if (!arr2[a])
+			{
+				arr2[a] = true;
+				break;
+			}
+		}
 		break;
 
 	case 'q': // 프로그램 종료
