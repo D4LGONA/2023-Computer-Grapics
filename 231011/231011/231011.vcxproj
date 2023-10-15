@@ -131,6 +131,7 @@
   <ItemGroup>
     <ClCompile Include="14.cpp" />
     <ClCompile Include="14x.cpp" />
+    <ClCompile Include="15.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="fragment.glsl" />
