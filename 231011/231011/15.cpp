@@ -55,12 +55,12 @@ vector<glm::vec3> c = {
 };
 
 vector<glm::vec3> v1 = {
-	{0.25f, 0.25f, -0.75f}, {0.25f, 0.25f, 0.25f}, {0.25f, 0.25f, 0.25f},
-	{0.25f, 0.25f, -0.75f}, {0.25f, 0.25f, 0.25f}, {0.25f, 0.25f, -0.75f},
-	{0.25f, 0.25f, 0.25f}, {0.25f, 0.25f, 0.25f}, {0.0f, 0.0f, 0.5f},
-	{0.25f, 0.25f, 0.25f},  {0.25f, 0.25f, -0.75f}, {0.0f, 0.0f, 0.5f},
-	{0.25f, 0.25f, -0.75f}, {0.25f, 0.25f, -0.75f}, {0.0f, 0.0f, 0.5f},
-	{0.25f, 0.25f, -0.75f}, {0.25f, 0.25f, 0.25f}, {0.0f, 0.0f, 0.5f}
+	{-0.25f, -0.25f, -0.25f}, {-0.25f, -0.25f, 0.25f},  {0.25f, -0.25f, 0.25f},
+	{-0.25f, -0.25f, -0.25f}, {0.25f, -0.25f, 0.25f},   {0.25f, -0.25f, -0.25f},
+	{-0.25f, -0.25f, 0.25f}, {0.25f, -0.25f, 0.25f}, {0.0f, 0.5f, 0.0f},
+	{0.25f, -0.25f, 0.25f}, {0.25f, -0.25f, -0.25f}, {0.0f, 0.5f, 0.0f},
+	{0.25f, -0.25f, -0.25f}, {-0.25f, -0.25f, -0.25f}, {0.0f, 0.5f, 0.0f},
+	{-0.25f, -0.25f, -0.25f}, {-0.25f, -0.25f, 0.25f}, {0.0f, 0.5f, 0.0f}
 };
 
 vector<glm::vec3> c1 = {
@@ -74,13 +74,16 @@ vector<glm::vec3> c1 = {
 
 POINT mousept;
 
+glm::vec3 transition{ 0.0f,0.0f,0.0f };
 int angleX = 0;
 int angleY = 0;
-glm::vec3 transition{ 0.0f,0.0f,0.0f };
-bool isRect = true;
 bool isX = false;
 bool isY = false;
 bool isMinus = false;
+bool isRect = true;
+bool isHide = true;
+bool isSolid = true;
+float X = 0.0f, Y = 0.0f;
 
 pair<float, float> WintoOpenGL(int x, int y)
 {
@@ -100,8 +103,21 @@ void update()
 
 void Reset()
 {
+	angleX = 0;
+	angleY = 0;
+	isX = false;
+	isY = false;
+	isMinus = false;
+	isRect = true;
+	isHide = true;
+	isSolid = true;
+	X = 0.0f;
+	Y = 0.0f;
+
 	v.clear();
 	c.clear();
+	v1.clear();
+	c1.clear();
 
 	v = { 
 	{-0.25f, 0.25f,   0.25f}, {-0.25f, -0.25f, 0.25f},  {0.25f, -0.25f, 0.25f},
@@ -132,6 +148,24 @@ void Reset()
 	{1.0f, 0.0f, 1.0f}, {1.0f, 0.0f, 1.0f}, {1.0f, 0.0f, 1.0f},
 	{1.0f, 0.0f, 1.0f}, {1.0f, 0.0f, 1.0f}, {1.0f, 0.0f, 1.0f},
 	};
+
+	v1 = {
+	{-0.25f, -0.25f, -0.25f}, {-0.25f, -0.25f, 0.25f},  {0.25f, -0.25f, 0.25f},
+	{-0.25f, -0.25f, -0.25f}, {0.25f, -0.25f, 0.25f},   {0.25f, -0.25f, -0.25f},
+	{-0.25f, -0.25f, 0.25f}, {0.25f, -0.25f, 0.25f}, {0.0f, 0.5f, 0.0f},
+	{0.25f, -0.25f, 0.25f}, {0.25f, -0.25f, -0.25f}, {0.0f, 0.5f, 0.0f},
+	{0.25f, -0.25f, -0.25f}, {-0.25f, -0.25f, -0.25f}, {0.0f, 0.5f, 0.0f},
+	{-0.25f, -0.25f, -0.25f}, {-0.25f, -0.25f, 0.25f}, {0.0f, 0.5f, 0.0f}
+	};
+
+	c1 = {
+	{0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f},
+	{0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f},
+	{1.0f, 0.0f, 1.0f}, {1.0f, 0.0f, 1.0f}, {1.0f, 0.0f, 1.0f},
+	{1.0f, 1.0f, 0.0f}, {1.0f, 1.0f, 0.0f}, {1.0f, 1.0f, 0.0f},
+	{0.0f, 1.0f, 1.0f}, {0.0f, 1.0f, 1.0f}, {0.0f, 1.0f, 1.0f},
+	{0.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 0.0f},
+	};
 }
 
 void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
@@ -154,7 +188,6 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	glutKeyboardFunc(Keyboard);
 	Reset();
 	glutTimerFunc(100, TimerFunction, 1);
-	glEnable(GL_DEPTH_TEST);
 	glutMainLoop();
 }
 
@@ -166,8 +199,13 @@ GLvoid drawScene()
 	glBindVertexArray(vao);
 	//angle += 10;
 
+	if (isHide)
+		glEnable(GL_DEPTH_TEST);
+	else
+		glDisable(GL_DEPTH_TEST);
+
 	glm::mat4 model = glm::mat4(1.0f);
-	model = glm::translate(model, glm::vec3(0.0f, 0.0f, -0.5f));
+	model = glm::translate(model, glm::vec3(X, Y, -0.5f));
 	model = glm::rotate(model, glm::radians(30.0f), glm::vec3(1.0f, 1.0f, 0.0f));
 	model = glm::rotate(model, glm::radians(float(angleX)), glm::vec3(1.0f, 0.0f, 0.0f));
 	model = glm::rotate(model, glm::radians(float(angleY)), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -189,8 +227,26 @@ GLvoid drawScene()
 
 	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
 
-	for (int i = 0; i < v.size(); i += 6)
-		glDrawArrays(GL_TRIANGLES, i, i + 6);
+	if (isRect)
+	{
+		if (!isSolid)
+			for (int i = 0; i < v.size(); i += 3)
+				glDrawArrays(GL_LINES, i, i + 3);
+		else
+			for (int i = 0; i < v.size(); i += 3)
+				glDrawArrays(GL_TRIANGLES, i, i + 3);
+	}
+	else
+	{
+		if (!isSolid)
+			for (int i = 0; i < v1.size(); i += 3)
+				glDrawArrays(GL_LINES, i, i + 3);
+		else
+			for(int i = 0; i < v1.size(); i += 3)
+				glDrawArrays(GL_TRIANGLES, i, i + 3);
+	}
+
+	
 
 	glDisableVertexAttribArray(PosLocation); // Disable 필수!
 	glDisableVertexAttribArray(ColorLocation);
@@ -208,17 +264,31 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 	switch (key)
 	{
 	case 'c': // 육면체 나와라 얍
+		isRect = true;
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * v.size(), v.data(), GL_STATIC_DRAW);
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * c.size(), c.data(), GL_STATIC_DRAW);
 		break;
 
 	case 'p': // 사각뿔 나와라 얍
+		isRect = false;
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * v1.size(), v1.data(), GL_STATIC_DRAW);
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * c1.size(), c1.data(), GL_STATIC_DRAW);
 		break;
 
 	case 'h': // 은면제거 적용/해제
+		isHide = !isHide;
 		break;
 
 	case 'w': // 와이어 객체
+		isSolid = false;
 		break;
+
 	case 'W': // 솔리드 객체
+		isSolid = true;
 		break;
 
 	case 'x': // x축기준 양의 방향 회전
@@ -245,16 +315,20 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 		isMinus = true;
 		break;
 
-	case VK_UP: //위로이동
+	case '1': //위로이동
+		Y += 0.05f;
 		break;
 
-	case VK_DOWN: //아래로 이동
+	case '2': //아래로 이동
+ 		Y -= 0.05f;
 		break;
 
-	case VK_RIGHT: // 오른쪽 이동
+	case '3': // 오른쪽 이동
+		X += 0.05f;
 		break;
 
-	case VK_LEFT: // 왼쪽이동
+	case '4': // 왼쪽이동
+		X -= 0.05f;
 		break;
 
 	case 's': // 초기화
