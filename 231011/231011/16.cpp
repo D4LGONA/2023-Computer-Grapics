@@ -3,6 +3,7 @@
 random_device rd;
 mt19937 dre(rd());
 uniform_real_distribution<float> uidC{ 0.0f, 1.0f }; // 랜덤 컬러 생성
+uniform_int_distribution uidS{ 0,3 };
 
 GLuint vao, vbo[2], ebo;
 
@@ -29,8 +30,8 @@ struct object
 	glm::mat4 matrix{ 1.0f };
 	int angleX = 0;
 	int angleY = 0;
-	bool isRender = false;
 	glm::vec3 transition{0.0f, 0.0f, 0.0f};
+	int state = 0;
 };
 
 object objs[4];
@@ -41,12 +42,24 @@ vector<glm::vec3> cube;
 vector<glm::vec3> cubeColor;
 vector<unsigned int> cubeIdx;
 
-glm::vec3 transition{ 0.0f, 0.0f, 0.0f };
+glm::vec3 transitionL{ 0.5f, 0.0f, 0.0f };
+glm::vec3 transitionR{ -0.5f, 0.0f, 0.0f };
 int angleY = 0;
-bool a = true;
-bool b = true;
-bool isminusX = false;
-bool isminusY = false;
+
+bool bigTurn = false;
+
+bool bigMinus = false;
+
+bool TurnX = false;
+bool TurnY = false;
+
+bool TurnMinus = false;
+
+bool turnR = false;
+bool turnL = false;
+
+object* Right = nullptr;
+object* Left = nullptr;
 
 float dist(int x1, int y1, int x2, int y2)
 {
@@ -83,14 +96,35 @@ void bind()
 
 void Reset()
 {
+	angleY = 0;
+
+	 bigTurn = false;
+
+	 bigMinus = false;
+
+	 TurnX = false;
+	 TurnY = false;
+
+	 TurnMinus = false;
+
+	 turnR = false;
+	 turnL = false;
+
 	for (int i = 0; i < 4; ++i)
 	{
 		objs[i].obj = gluNewQuadric();
 		gluQuadricDrawStyle(objs[i].obj, GLU_LINE);
 		gluQuadricNormals(objs[i].obj, GLU_SMOOTH);
 		gluQuadricOrientation(objs[i].obj, GLU_OUTSIDE);
-		objs[i].transition = { 0.5f, 0.0f, 0.0f };
+		objs[i].transition = { 0.0f, 0.0f, 0.0f };
+		objs[i].state = i;
 	}
+
+	Left = &objs[0];
+	Right = &objs[1];
+
+	Left->transition = transitionL;
+	Right->transition = transitionR;
 }
 
 void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
@@ -125,13 +159,6 @@ GLvoid drawScene()
 	
 	glEnable(GL_DEPTH_TEST);
 
-	// 여기서 전체 공전을 시키는 녀석이 필요하죠
-	/*model = glm::rotate(model, glm::radians(float(angleY)), glm::vec3(0.0f, 1.0f, 0.0f));
-	model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
-	model = glm::rotate(model, glm::radians(0.0f), glm::vec3(1.0f, 1.0f, 1.0f));
-	model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));*/
-
-
 	// Location 번호 저장
 	int PosLocation = glGetAttribLocation(shaderProgramID, "in_Position"); //	: 0  Shader의 'layout (location = 0)' 부분
 	int ColorLocation = glGetAttribLocation(shaderProgramID, "in_Color"); //	: 1
@@ -147,12 +174,39 @@ GLvoid drawScene()
 	glVertexAttribPointer(ColorLocation, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), 0);
 
 
-	for (int i = 0; i < 1; ++i)
+	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(Left->matrix));
+	switch (Left->state)
 	{
-		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(objs[i].matrix));
-		gluSphere(objs[i].obj, 1.0f, 20, 20);
+	case 0:
+		gluSphere(Left->obj, 1.0f, 20, 20);
+		break;
+	case 1:
+		gluCylinder(Left->obj, 1.0f, 0.0f, 2.0f, 20, 8);
+		break;
+	case 2:
+		gluCylinder(Left->obj, 1.0f, 1.0f, 2.0f, 20, 8);
+		break;
+	case 3:
+		gluSphere(Left->obj, 1.0f, 4, 2);
+		break;
 	}
 
+	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(Right->matrix));
+	switch (Right->state)
+	{
+	case 0:
+		gluSphere(Right->obj, 1.0f, 20, 20);
+		break;
+	case 1:
+		gluCylinder(Right->obj, 1.0f, 0.0f, 2.0f, 20, 8);
+		break;
+	case 2:
+		gluCylinder(Right->obj, 1.0f, 1.0f, 2.0f, 20, 8);
+		break;
+	case 3:
+		gluSphere(Right->obj, 1.0f, 4, 2);
+		break;
+	}
 
 
 	// 그리기 // 
@@ -193,51 +247,77 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 	}
 
 	case 'x': // x축 양의방향자전
-		objs[0].angleX += 2;
-		/*for (int i = 0; i < 4; ++i)
-		{
-			
-		}*/
-		
+		turnR = true;
+		turnL = true;
+		TurnX = true;
+		TurnY = false;
+		TurnMinus = false;
 		break;
 
 	case 'X': //x축 음의방향 자전
-		objs[0].angleX -= 5;
-		//angleX--;
+		turnR = true;
+		turnL = true;
+		TurnX = true;
+		TurnY = false;
+		TurnMinus = true;
 		break;
 
 	case 'y': // y축 양의방향 자전
-		objs[0].angleY += 5;
-		//angleY++;
+		turnR = true;
+		turnL = true;
+		TurnX = false;
+		TurnY = true;
+		TurnMinus = false;
 		break;
 
 	case 'Y': // y축 음의방향 자전
-		//angleY--;
+		turnR = true;
+		turnL = true;
+		TurnX = false;
+		TurnY = true;
+		TurnMinus = true;
 		break;
 
 	case '1':
-		a = true;
-		b = false;
+		turnR = true;
+		turnL = false;
 		break;
 	case '2':
-		a = false;
-		b = true;
+		turnL = true;
+		turnR = false;
 		break;
 	case '3':
-		a = true;
-		b = true;
+		turnL = true;
+		turnR = true;
 		break;
 
 	case 'r': // y축에 대해 양의방향 공전
+		bigTurn = true;
+		bigMinus = false;
 		break;
 
 	case 'R': // y축에 대해 음의방향 공전
+		bigTurn = true;
+		bigMinus = true;
 		break;
 
 	case 'c': // 도형 바꾸기 ㅋㅋ
+		Right = &objs[uidS(dre)];
+		Right->transition = transitionR;
+		while (true)
+		{
+			int tmp = uidS(dre);
+			if (Right != &objs[tmp])
+			{
+				Left = &objs[tmp];
+				Left->transition = transitionL;
+				break;
+			}
+		}
 		break;
 
 	case 's': // reset
+		Reset();
 		break;
 
 	case 'q': // 프로그램 종료
@@ -249,8 +329,48 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 
 GLvoid TimerFunction(int value)
 {
-	
-	angleY += 5;
+	if (TurnX)
+	{
+		if (TurnMinus)
+		{
+			if (turnR)
+				Right->angleX -= 5;
+			if (turnL)
+				Left->angleX -= 5;
+		}
+		else
+		{
+			if (turnR)
+				Right->angleX += 5;
+			if (turnL)
+				Left->angleX += 5;
+		}
+	}
+	if (TurnY)
+	{
+		if (TurnMinus)
+		{
+			if (turnR)
+				Right->angleY -= 5;
+			if (turnL)
+				Left->angleY -= 5;
+		}
+		else
+		{
+			if (turnR)
+				Right->angleY += 5;
+			if (turnL)
+				Left->angleY += 5;
+		}
+	}
+
+	if (bigTurn)
+	{
+		if(bigMinus)
+			angleY -= 5;
+		else
+			angleY += 5;
+	}
 	update();
 
 	glutPostRedisplay();
