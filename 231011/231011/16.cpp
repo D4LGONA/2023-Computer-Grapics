@@ -23,7 +23,17 @@ void InitBuffer();
 char* filetobuf(const char*);
 void ReadObj(FILE* path);
 
-GLUquadric* objs[4];
+struct object
+{
+	GLUquadric* obj;
+	glm::mat4 matrix{ 1.0f };
+	int angleX = 0;
+	int angleY = 0;
+	bool isRender = false;
+	glm::vec3 transition{0.0f, 0.0f, 0.0f};
+};
+
+object objs[4];
 
 POINT mousept;
 
@@ -31,10 +41,7 @@ vector<glm::vec3> cube;
 vector<glm::vec3> cubeColor;
 vector<unsigned int> cubeIdx;
 
-
-
 glm::vec3 transition{ 0.0f, 0.0f, 0.0f };
-int angleX = 0;
 int angleY = 0;
 bool a = true;
 bool b = true;
@@ -48,7 +55,23 @@ float dist(int x1, int y1, int x2, int y2)
 
 int length = 0;
 
-void update() // 바인딩 다시 갈기는 녀석
+void update() // 매트릭스 초기화하고 다시 넘겨 줄 것임
+{
+	for (int i = 0; i < 4; ++i)
+	{
+		glm::mat4 tmp{ 1.0f };
+		objs[i].matrix = tmp;
+
+		objs[i].matrix = glm::rotate(objs[i].matrix, glm::radians(float(angleY)), glm::vec3(0.0f, 1.0f, 0.0f));
+		objs[i].matrix = glm::translate(objs[i].matrix, objs[i].transition);
+		objs[i].matrix = glm::rotate(objs[i].matrix, glm::radians(float(objs[i].angleY)), glm::vec3(0.0f, 1.0f, 0.0f));
+		objs[i].matrix = glm::rotate(objs[i].matrix, glm::radians(float(objs[i].angleX)), glm::vec3(1.0f, 0.0f, 0.0f));
+		objs[i].matrix = glm::rotate(objs[i].matrix, glm::radians(45.0f), glm::vec3(1.0f, 1.0f, 1.0f));
+		objs[i].matrix = glm::scale(objs[i].matrix, glm::vec3(0.2f, 0.2f, 0.2f));
+	}
+}
+
+void bind()
 {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * cubeIdx.size(), cubeIdx.data(), GL_STATIC_DRAW);
@@ -60,14 +83,14 @@ void update() // 바인딩 다시 갈기는 녀석
 
 void Reset()
 {
-	objs[0] = gluNewQuadric();
-	gluQuadricDrawStyle(objs[0], GLU_LINE);
-	gluQuadricNormals(objs[0], GLU_SMOOTH);
-	gluQuadricOrientation(objs[0], GLU_OUTSIDE);
-	gluSphere(objs[0], 1.0f, 20, 20);
-
-
-
+	for (int i = 0; i < 4; ++i)
+	{
+		objs[i].obj = gluNewQuadric();
+		gluQuadricDrawStyle(objs[i].obj, GLU_LINE);
+		gluQuadricNormals(objs[i].obj, GLU_SMOOTH);
+		gluQuadricOrientation(objs[i].obj, GLU_OUTSIDE);
+		objs[i].transition = { 0.5f, 0.0f, 0.0f };
+	}
 }
 
 void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
@@ -102,12 +125,11 @@ GLvoid drawScene()
 	
 	glEnable(GL_DEPTH_TEST);
 
-	glm::mat4 model = glm::mat4(1.0f);
+	// 여기서 전체 공전을 시키는 녀석이 필요하죠
+	/*model = glm::rotate(model, glm::radians(float(angleY)), glm::vec3(0.0f, 1.0f, 0.0f));
 	model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
-	model = glm::rotate(model, glm::radians(30.0f), glm::vec3(1.0f, 1.0f, 1.0f));
-	model = glm::rotate(model, glm::radians(float(angleY)), glm::vec3(0.0f, 1.0f, 0.0f));
-	model = glm::rotate(model, glm::radians(float(angleX)), glm::vec3(1.0f, 0.0f, 0.0f));
-	model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
+	model = glm::rotate(model, glm::radians(0.0f), glm::vec3(1.0f, 1.0f, 1.0f));
+	model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));*/
 
 
 	// Location 번호 저장
@@ -124,7 +146,14 @@ GLvoid drawScene()
 	glBindBuffer(GL_ARRAY_BUFFER, vbo[1]); // 색상 데이터용 VBO 바인딩
 	glVertexAttribPointer(ColorLocation, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), 0);
 
-	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
+
+	for (int i = 0; i < 1; ++i)
+	{
+		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(objs[i].matrix));
+		gluSphere(objs[i].obj, 1.0f, 20, 20);
+	}
+
+
 
 	// 그리기 // 
 
@@ -164,19 +193,26 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 	}
 
 	case 'x': // x축 양의방향자전
-		angleX++;
+		objs[0].angleX += 2;
+		/*for (int i = 0; i < 4; ++i)
+		{
+			
+		}*/
+		
 		break;
 
 	case 'X': //x축 음의방향 자전
-		angleX--;
+		objs[0].angleX -= 5;
+		//angleX--;
 		break;
 
 	case 'y': // y축 양의방향 자전
-		angleY++;
+		objs[0].angleY += 5;
+		//angleY++;
 		break;
 
 	case 'Y': // y축 음의방향 자전
-		angleY--;
+		//angleY--;
 		break;
 
 	case '1':
@@ -214,6 +250,8 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 GLvoid TimerFunction(int value)
 {
 	
+	angleY += 5;
+	update();
 
 	glutPostRedisplay();
 	glutTimerFunc(100, TimerFunction, 1);
