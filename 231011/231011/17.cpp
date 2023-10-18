@@ -95,12 +95,19 @@ void update() // 매트릭스 초기화하고 다시 넘겨 줄 것임
 		objs[i].matrix = tmp;
 
 		objs[i].matrix = glm::scale(objs[i].matrix, glm::vec3(Gscale, Gscale, Gscale));
-		objs[i].matrix = glm::rotate(objs[i].matrix, glm::radians(-45.0f), glm::vec3(1.0f, 1.0f, 0.0f));
-		objs[i].matrix = glm::rotate(objs[i].matrix, glm::radians(float(angleY)), glm::vec3(0.0f, 1.0f, 0.0f));
-		objs[i].matrix = glm::rotate(objs[i].matrix, glm::radians(float(angleZ)), glm::vec3(0.0f, 0.0f, 1.0f));
-		objs[i].matrix = glm::translate(objs[i].matrix, objs[i].transition);
-		objs[i].matrix = glm::rotate(objs[i].matrix, glm::radians(float(objs[i].angleY)), glm::vec3(0.0f, 1.0f, 0.0f));
-		objs[i].matrix = glm::rotate(objs[i].matrix, glm::radians(float(objs[i].angleX)), glm::vec3(1.0f, 0.0f, 0.0f));
+		objs[i].matrix = glm::rotate(objs[i].matrix, glm::radians(-45.0f), glm::vec3(1.0f, 1.0f, 0.0f)); // 전체 돌린 것
+		//if(angleY % 180 != 0 || angleZ % 180 != 0)
+		//	objs[i].matrix = glm::translate(objs[i].matrix, -objs[i].transition); // 이동
+		objs[i].matrix = glm::rotate(objs[i].matrix, glm::radians(float(angleY)), glm::vec3(0.0f, 1.0f, 0.0f)); // 공전인가?
+		objs[i].matrix = glm::rotate(objs[i].matrix, glm::radians(float(angleZ)), glm::vec3(0.0f, 0.0f, 1.0f)); // 공전인가?
+		//objs[i].matrix = glm::translate(objs[i].matrix, objs[i].transition); // 이동
+		objs[i].matrix = glm::translate(objs[i].matrix, objs[i].transition); // 이동
+		if(&objs[i] == Left)
+			objs[i].matrix = glm::translate(objs[i].matrix, transitionL); // 이동
+		if (&objs[i] == Right)
+			objs[i].matrix = glm::translate(objs[i].matrix, transitionR); // 이동
+		objs[i].matrix = glm::rotate(objs[i].matrix, glm::radians(float(objs[i].angleY)), glm::vec3(0.0f, 1.0f, 0.0f)); // 자전
+		objs[i].matrix = glm::rotate(objs[i].matrix, glm::radians(float(objs[i].angleX)), glm::vec3(1.0f, 0.0f, 0.0f)); //
 		objs[i].matrix = glm::scale(objs[i].matrix, glm::vec3(objs[i].scale, objs[i].scale, objs[i].scale));
 	}
 }
@@ -132,8 +139,8 @@ void Reset()
 	Left = &objs[0];
 	Right = &objs[1];
 
-	Left->transition = transitionL;
-	Right->transition = transitionR;
+	/*Left->transition = transitionL;
+	Right->transition = transitionR;*/
 }
 
 void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
@@ -254,6 +261,8 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 		break;
 
 	case 'y':
+		Left->transition.y += 0.1f;
+		Right->transition.y += 0.1f;
 		break;
 	case 'Y':
 		break;
@@ -298,13 +307,15 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 	}
 
 	case 't': // 원점으로 이동했다 제자리
+		tmp.first = Right->transition.x + transitionR.x;
+		tmp.second = Left->transition.x + transitionL.x;
 		MoveOrigin = true;
 		break;
 
 	case '1': // 두 도형이 중심점을 통과하며 상대 자리로 이동
 		Swap = true;
-		tmp.first = Right->transition.x;
-		tmp.second = Left->transition.x;
+		tmp.first = Right->transition.x + transitionR.x;
+		tmp.second = Left->transition.x + transitionL.x;
 
 		break;
 	case '2': // 뭔소리지
@@ -323,6 +334,7 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 		exit(0);
 		break;
 	}
+	//update();
 	glutPostRedisplay();
 }
 
@@ -330,6 +342,28 @@ GLvoid TimerFunction(int value)
 {
 	if (MoveOrigin)
 	{
+
+		if (ToOrigin)
+		{
+			Right->transition.x += 0.1f;
+			Left->transition.x -= 0.1f;
+			if (Right->transition.x + transitionR.x >= 0.0f) 
+				ToOrigin = false;
+		}
+		else
+		{
+			Right->transition.x -= 0.1f;
+			Left->transition.x += 0.1f;
+			if (Right->transition.x + transitionR.x <= tmp.first)
+			{
+				/*Right->transition.x += 0.1f;
+				Left->transition.x -= 0.1f;*/
+				/*Right->transition.x = 0.0f;
+				Left->transition.x = 0.0f;*/
+				MoveOrigin = false;
+				ToOrigin = true;
+			}
+		}/*
 		if (ToOrigin)
 		{
 			Right->transition.x += 0.1f;
@@ -343,7 +377,7 @@ GLvoid TimerFunction(int value)
 			Left->transition.x += 0.1f;
 			if (Right->transition.x <= -1.0f && Left->transition.x >= 1.0f)
 				ToOrigin = true;
-		}
+		}*/
 	}
 
 	if (spiral)
@@ -357,29 +391,38 @@ GLvoid TimerFunction(int value)
 
 	if (swapXZ)
 	{
-		angleY+= 5;
-		if (angleY % 180 == 0) swapXZ = false;
+		angleY += 5;
+		if (angleY % 180 == 0) 
+			swapXZ = false;
 	}
 
 	if (swapYZ)
 	{
 		angleZ += 5;
-		if (angleZ % 180 == 0) swapYZ = false;
+		if (angleZ % 180 == 0)
+			swapYZ = false;
 	}
 
 	if (Swap)
 	{
-		if (Right->transition.x < tmp.second)
+		if (Right->transition.x + transitionR.x < tmp.second)
 		{
 			Right->transition.x += 0.1f;
 			Left->transition.x -= 0.1f;
-			if (Right->transition.x >= tmp.second) Swap = false;
+			if (Right->transition.x + transitionR.x >= tmp.second) Swap = false;
 		}
 		else
 		{
 			Right->transition.x -= 0.1f;
 			Left->transition.x += 0.1f;
-			if (Right->transition.x < tmp.second) Swap = false;
+			if (Right->transition.x + transitionR.x < tmp.second)
+			{
+				Right->transition.x += 0.1f;
+				Left->transition.x -= 0.1f;
+				/*Right->transition.x = 0.0f;
+				Left->transition.x = 0.0f;*/
+				Swap = false;
+			}
 		}
 	}
 	update();

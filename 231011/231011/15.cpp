@@ -335,6 +335,9 @@
 //		Reset();
 //		break;
 //
+//	case VK_DOWN:
+//		X = 0;
+//		break;
 //
 //	case 'q': // 프로그램 종료
 //		exit(0);
