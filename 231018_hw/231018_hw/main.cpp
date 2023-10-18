@@ -139,12 +139,33 @@ GLvoid Mouse(int button, int state, int x, int y)
 	else if (button == GLUT_LEFT_BUTTON && state == GLUT_UP)
 	{
 		isDrag = false;
-		for (object& i : v)
+		vector<int> arr;
+		int max = v.size();
+		for(int count = 0; count < max; ++count)
 		{
-			pair<bool, vector<POINT>> tmp = i.isCross(linePt[0], linePt[1]);
+			//if (count >= v.size()) break;
+
+			pair<bool, pair<vector<POINT>, vector<POINT>>> tmp = v[count].isCross(linePt[0], linePt[1]);
 			if (tmp.first)
-				for (int j = 0; j < tmp.second.size(); ++j)
-					cout << tmp.second[j].x << ", " << tmp.second[j].y << endl;
+			{
+				for (int j = 0; j < tmp.second.first.size(); ++j)
+					cout << tmp.second.first[j].x << ", " << tmp.second.first[j].y << endl;
+				for (int j = 0; j < tmp.second.second.size(); ++j)
+					cout << tmp.second.second[j].x << ", " << tmp.second.second[j].y << endl;
+
+
+				v.push_back({ tmp.second.first });
+				v.back().sliceMove(-1);
+				v.push_back({ tmp.second.second });
+				v.back().sliceMove(1);
+				
+				arr.push_back(count);
+			}
+		}
+
+		for (int i = 0; i < arr.size(); ++i)
+		{
+			v.erase(v.begin() + (arr[i] - i));
 		}
 	}
 	return GLvoid();

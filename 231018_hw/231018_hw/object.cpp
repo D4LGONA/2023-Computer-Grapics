@@ -12,6 +12,22 @@ object::object(int x, int y, int sides, int size)
 	}
 }
 
+object::object(vector<POINT> input)
+{
+	pts = input;
+	color = { uidC(dre), uidC(dre), uidC(dre) };
+}
+
+void object::sliceMove(int dir)
+{
+	if (dir <= 0)
+		for (POINT& i : pts)
+			i.x -= 10;
+	else
+		for (POINT& i : pts)
+			i.x += 10;
+}
+
 void object::render(GLuint vbo[])
 {
 	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
@@ -27,9 +43,6 @@ void object::render(GLuint vbo[])
 
 void object::update()
 {
-
-
-
 	pt.clear();
 	c.clear();
 
@@ -48,10 +61,12 @@ void object::remove()
 	pts.clear();
 }
 
-pair<bool, vector<POINT>> object::isCross(POINT pt1, POINT pt2)
+pair<bool, pair<vector<POINT>, vector<POINT>>> object::isCross(POINT pt1, POINT pt2)
 {
 	bool breturn = false;
 	vector<POINT> v;
+	vector<POINT> left;
+	vector<POINT> right;
 
 	for (int i = 0; i < pts.size(); ++i)
 	{
@@ -82,7 +97,22 @@ pair<bool, vector<POINT>> object::isCross(POINT pt1, POINT pt2)
 
 	}
 	if (v.size() == 0) breturn = false;
+	else
+	{
+		for (int i = 0; i < pts.size(); ++i)
+		{
+			float tmp = (pts[i].x - v[0].x) * (v[1].y - v[0].y) - (pts[i].y - v[0].y) * (v[1].x - v[0].x);
+			if (tmp > 0) left.push_back(pts[i]);
+			else if (tmp < 0) right.push_back(pts[i]);
+		}
+		left.push_back(v[1]);
+		right.push_back(v[1]);
+		left.push_back(v[0]);
+		right.push_back(v[0]);
 
-	return { breturn, v };
+	}
+
+
+	return { breturn, {left, right} };
 }
 
