@@ -19,25 +19,13 @@ GLvoid Motion(int x, int y);
 void InitBuffer();
 char* filetobuf(const char*);
 
-void makeObject(int, int, int);
-
 bool isDrag = false;
 vector<object> v;
 
 POINT mousept;
 glm::vec3 dragLine[2];
+POINT linePt[2];
 glm::vec3 lineColor[2] = { {0.0f, 1.0f, 1.0f }, {0.0f, 1.0f, 1.0f} };
-
-void makePolyObject(int x, int y, int sides, int idx)
-{
-	for (int i = 0; i < sides; ++i)
-	{
-		GLfloat angle = 2.0 * 3.14f * i / sides;
-		int ax = x + 100 * cos(angle);
-		int ay = y + 100 * sin(angle);
-		//pts.insert(pts.begin() + idx, {ax, ay});
-	}
-}
 
 void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 {
@@ -113,9 +101,13 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 	switch (key)
 	{
 	case 'c':
+		v.push_back({ 400, 400, 5, 100 });
 		break;
 
 	case 'q': // 프로그램 종료
+		for (int i = 0; i < v.size(); ++i)
+			v[i].remove();
+
 		exit(0);
 		break;
 	}
@@ -126,6 +118,8 @@ GLvoid TimerFunction(int value)
 {
 	for (object& i : v)
 		i.update();
+
+	
 
 	glutPostRedisplay();
 	glutTimerFunc(100, TimerFunction, 1);
@@ -139,10 +133,19 @@ GLvoid Mouse(int button, int state, int x, int y)
 		pair<float, float> tmp = WintoOpenGL({ x,y });
 		dragLine[0] = { tmp.first, tmp.second, 0.0f };
 		dragLine[1] = { tmp.first, tmp.second, 0.0f };
+		linePt[0] = { x,y };
+		linePt[1] = { x,y };
 	}
 	else if (button == GLUT_LEFT_BUTTON && state == GLUT_UP)
 	{
 		isDrag = false;
+		for (object& i : v)
+		{
+			pair<bool, vector<POINT>> tmp = i.isCross(linePt[0], linePt[1]);
+			if (tmp.first)
+				for (int j = 0; j < tmp.second.size(); ++j)
+					cout << tmp.second[j].x << ", " << tmp.second[j].y << endl;
+		}
 	}
 	return GLvoid();
 }
@@ -153,6 +156,7 @@ GLvoid Motion(int x, int y)
 	{
 		pair<float, float> tmp = WintoOpenGL({ x,y });
 		dragLine[1] = { tmp.first, tmp.second, 0.0f };
+		linePt[1] = { x,y };
 	}
 	glutPostRedisplay();
 }

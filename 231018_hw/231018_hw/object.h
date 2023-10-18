@@ -9,13 +9,15 @@ class object
 	vector<glm::vec3> c;
 
 	int size = 50;
-	bool isWire = true;
+	bool isSolid = true;
 
 
 public:
+	object(int x, int y, int sides, int size ); // 중심 좌표와  모양, 크기
 
 	void render(GLuint vbo[]);
 	void update();
 	void remove();
+	pair<bool, vector<POINT>> isCross(POINT, POINT);
 };
 
