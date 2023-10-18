@@ -143,8 +143,6 @@ GLvoid Mouse(int button, int state, int x, int y)
 		int max = v.size();
 		for(int count = 0; count < max; ++count)
 		{
-			//if (count >= v.size()) break;
-
 			pair<bool, pair<vector<POINT>, vector<POINT>>> tmp = v[count].isCross(linePt[0], linePt[1]);
 			if (tmp.first)
 			{

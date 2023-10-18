@@ -15,6 +15,7 @@ public:
 	object(int x, int y, int sides, int size ); // 중심 좌표와  모양, 크기
 	object(vector<POINT> input);
 
+	void sortVertex();
 	void sliceMove(int dir);
 	void render(GLuint vbo[]);
 	void update();

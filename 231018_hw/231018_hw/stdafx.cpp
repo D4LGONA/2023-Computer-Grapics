@@ -1,11 +1,5 @@
 #include "stdafx.h"
 
-//random_device rd;
-//mt19937 dre(rd());
-//
-//uniform_real_distribution<float> uidC{ 0.0f, 1.0f }; // 랜덤 컬러 생성
-//GLuint vao, vbo[2];
-
 std::random_device rd;
 std::mt19937 dre(rd());
 std::uniform_real_distribution<float> uidC{ 0.0f, 1.0f };
@@ -16,7 +10,18 @@ pair<float, float> WintoOpenGL(POINT pt)
 	return a;
 }
 
-float dist(int x1, int y1, int x2, int y2)
+int ccw(POINT A, POINT B, POINT C)
 {
-	return sqrt(powf(x2 - x1, 2) + powf(y2 - y1, 2));
+	float rot = (B.x - A.x) * (C.y - A.y) - (C.x - A.x) * (B.y - A.y);
+
+	if (rot > 0) return 1;       //0보다 크면 좌회전
+	else if (rot < 0) return -1; //0보다 작으면 우회전
+	else return 0;
 }
+
+float dist(POINT p1, POINT p2)
+{
+	return sqrt(powf(p2.x - p1.x, 2) + powf(p2.y - p1.y, 2));
+}
+
+

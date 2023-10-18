@@ -7,6 +7,7 @@
 #include <fstream>
 #include <random>
 #include <vector>
+#include <algorithm>
 
 #include <gl/glew.h>
 #include <gl/freeglut.h>
@@ -27,4 +28,5 @@ extern std::mt19937 dre;
 extern std::uniform_real_distribution<float> uidC;
 
 pair<float, float> WintoOpenGL(POINT pt);
-float dist(int x1, int y1, int x2, int y2);
+float dist(POINT p1, POINT p2);
+int ccw(POINT , POINT , POINT );
