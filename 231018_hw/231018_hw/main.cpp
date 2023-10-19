@@ -104,6 +104,14 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 		v.push_back({ 400, 400, 5, 100 });
 		break;
 
+	case 'w':
+		isSolid = false;
+		break;
+
+	case 's':
+		isSolid = true;
+		break;
+
 	case 'q': // 프로그램 종료
 		for (int i = 0; i < v.size(); ++i)
 			v[i].remove();

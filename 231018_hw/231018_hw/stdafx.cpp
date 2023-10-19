@@ -3,6 +3,7 @@
 std::random_device rd;
 std::mt19937 dre(rd());
 std::uniform_real_distribution<float> uidC{ 0.0f, 1.0f };
+bool isSolid = true;
 
 pair<float, float> WintoOpenGL(POINT pt)
 {

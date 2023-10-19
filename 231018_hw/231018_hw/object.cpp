@@ -1,8 +1,6 @@
 #include "stdafx.h"
 #include "object.h"
 
-
-
 object::object(int x, int y, int sides, int size)
 {
 	for (int i = 0; i < sides; ++i)
@@ -27,12 +25,14 @@ void object::sortVertex()
 	for (int i = 1; i < pts.size(); i++)
 		if (pts[i].y < pts[temp].y || (pts[i].y == pts[temp].y && pts[i].x < pts[temp].x))
 			temp = i;
+
 	sort(pts.begin() + 1, pts.end(), [this](POINT a, POINT b) {
 	int val = ccw(pts[0], a, b);
 	if (val > 0) return true;
 	if (val < 0) return false;
 	if (dist(pts[0], a) < dist(pts[0], b)) return true;
 	return false; });//기준점을 제외한 점을 정렬시킵니다.
+
 	vector<POINT> res = pts;//그라함 스캔으로 볼록 다각형의 꼭지점을 찾아봅니다.
 	cout << res.size();
 }

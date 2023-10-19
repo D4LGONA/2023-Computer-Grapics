@@ -26,6 +26,7 @@ struct vertex
 extern std::random_device rd;
 extern std::mt19937 dre;
 extern std::uniform_real_distribution<float> uidC;
+extern bool isSolid;
 
 pair<float, float> WintoOpenGL(POINT pt);
 float dist(POINT p1, POINT p2);

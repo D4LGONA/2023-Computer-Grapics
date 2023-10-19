@@ -8,7 +8,7 @@ class object
 	vector<glm::vec3> pt;
 	vector<glm::vec3> c;
 
-	bool isSolid = true;
+	//bool isSolid = true;
 
 
 public:
@@ -20,6 +20,7 @@ public:
 	void render(GLuint vbo[]);
 	void update();
 	void remove();
+	//void SETWIRE(bool b) { isSolid = b; }
 	pair<bool, pair<vector<POINT>, vector<POINT>>> isCross(POINT, POINT);
 };
 
