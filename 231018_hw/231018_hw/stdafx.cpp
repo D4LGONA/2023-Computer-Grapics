@@ -3,6 +3,10 @@
 std::random_device rd;
 std::mt19937 dre(rd());
 std::uniform_real_distribution<float> uidC{ 0.0f, 1.0f };
+std::uniform_real_distribution<float> uidD{ -0.5f, 0.5f }; // 너무 작은 수는 안나오게...
+std::uniform_int_distribution<int> uidS{ 3, 8 }; // 꼭짓점 개수
+std::uniform_int_distribution<int> uidY{200, 600}; // y좌표 값
+float G = 9.8f;
 bool isSolid = true;
 
 pair<float, float> WintoOpenGL(POINT pt)

@@ -7,12 +7,12 @@ class object
 	glm::vec3 color;
 	vector<glm::vec3> pt;
 	vector<glm::vec3> c;
+	pair<float, float> dir;
 
-	//bool isSolid = true;
-
+	float gravity = 0.5f;
 
 public:
-	object(int x, int y, int sides, int size ); // 중심 좌표와  모양, 크기
+	object(int sides, int size ); // 모양, 크기
 	object(vector<POINT> input);
 
 	void sortVertex();
@@ -20,7 +20,8 @@ public:
 	void render(GLuint vbo[]);
 	void update();
 	void remove();
-	//void SETWIRE(bool b) { isSolid = b; }
+	void move();
+
 	pair<bool, pair<vector<POINT>, vector<POINT>>> isCross(POINT, POINT);
 };
 

@@ -19,6 +19,7 @@ GLvoid Motion(int x, int y);
 void InitBuffer();
 char* filetobuf(const char*);
 
+int cnt = 0;
 bool isDrag = false;
 vector<object> v;
 
@@ -46,7 +47,7 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	glutMotionFunc(Motion);
 	glutKeyboardFunc(Keyboard);
 
-	glutTimerFunc(100, TimerFunction, 1);
+	glutTimerFunc(50, TimerFunction, 1);
 
 	glutMainLoop();
 }
@@ -101,7 +102,7 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 	switch (key)
 	{
 	case 'c':
-		v.push_back({ 400, 400, 5, 100 });
+		v.push_back({5, 30 });
 		break;
 
 	case 'w':
@@ -124,13 +125,23 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 
 GLvoid TimerFunction(int value)
 {
+	/*cnt++;
+
+	if (cnt >= 10)
+	{
+		v.push_back({ uidS(dre), 30 });
+		cnt = 0;
+	}*/
+
+	for (object& i : v)
+		i.move();
+
 	for (object& i : v)
 		i.update();
-
 	
 
 	glutPostRedisplay();
-	glutTimerFunc(100, TimerFunction, 1);
+	glutTimerFunc(50, TimerFunction, 1);
 }
 
 GLvoid Mouse(int button, int state, int x, int y)

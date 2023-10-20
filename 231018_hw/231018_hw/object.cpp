@@ -1,8 +1,29 @@
 #include "stdafx.h"
 #include "object.h"
 
-object::object(int x, int y, int sides, int size)
-{
+object::object(int sides, int size)
+{ 
+	// 초기 위치랑 방향값 줘야 함
+	// 중력 상수 정해야 함
+
+	int x, y;
+	dir.first = uidD(dre) * 2;
+	dir.second = uidD(dre) * 2;
+	if (dir.second > 0.0f)
+		dir.second *= -1; // 무조건 위 방향으로 가게
+
+	if (dir.first < 0.0f) // 왼쪽 방향으로 가는 녀석은 오른쪽에서 발사
+	{
+		x = 800 + size;
+		y = uidY(dre);
+	}
+	else // 오른쪽으로 가는 녀석은 왼쪽에서 발사
+	{
+		x = -size;
+		y = uidY(dre);
+	}
+
+
 	for (int i = 0; i < sides; ++i)
 	{
 		GLfloat angle = 2.0 * 3.14f * i / sides;
@@ -34,11 +55,11 @@ void object::sortVertex()
 	return false; });//기준점을 제외한 점을 정렬시킵니다.
 
 	vector<POINT> res = pts;//그라함 스캔으로 볼록 다각형의 꼭지점을 찾아봅니다.
-	cout << res.size();
 }
 
 void object::sliceMove(int dir)
 {
+	// 잘랐을때 dir y축대칭 갈기면 될듯
 	if (dir <= 0)
 		for (POINT& i : pts)
 			i.x -= 10;
@@ -67,8 +88,11 @@ void object::update()
 
 	for (int i = 0; i < pts.size(); ++i)
 	{
-		pair<float, float> tmppt = WintoOpenGL(pts[i]);
+		POINT tmp = pts[i];
+		pair<float, float> tmppt = WintoOpenGL(tmp);
 		pt.push_back({ tmppt.first, tmppt.second, 0.0f });
+		if (pt.back().x <= -1 || pt.back().y >= 1)
+			int a = 0;
 		c.emplace_back(color);
 	}
 }
@@ -78,6 +102,21 @@ void object::remove()
 	pt.clear();
 	c.clear();
 	pts.clear();
+}
+
+void object::move()
+{
+	gravity *= 1.06f; // 요기 값 잘 조절해서 어떻게 해볼 것
+	for (int i = 0; i < pts.size(); ++i)
+	{
+		POINT tmp = pts[i];
+		tmp.x += 800, tmp.y += 800;
+		tmp.x += dir.first * 10;
+		tmp.y += dir.second * 10;
+		tmp.y += gravity;
+		tmp.x -= 800, tmp.y -= 800;
+		pts[i] = tmp;
+	}
 }
 
 pair<bool, pair<vector<POINT>, vector<POINT>>> object::isCross(POINT pt1, POINT pt2)
@@ -116,6 +155,7 @@ pair<bool, pair<vector<POINT>, vector<POINT>>> object::isCross(POINT pt1, POINT 
 
 	}
 	if (v.size() == 0) breturn = false;
+	else if (v.size() == 1) breturn = false;
 	else
 	{
 		for (int i = 0; i < pts.size(); ++i)
