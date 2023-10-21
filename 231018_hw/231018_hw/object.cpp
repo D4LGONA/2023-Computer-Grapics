@@ -3,16 +3,16 @@
 
 object::object(int sides, int size)
 { 
-	// 초기 위치랑 방향값 줘야 함
-	// 중력 상수 정해야 함
-
 	int x, y;
-	dir.first = uidD(dre) * 2;
-	dir.second = uidD(dre) * 2;
-	if (dir.second > 0.0f)
-		dir.second *= -1; // 무조건 위 방향으로 가게
+	dir.x = uidD(dre) * 4;
+	dir.y = uidD(dre) * 4;
+	while (abs(dir.x) < 0.2f)
+		dir.x = uidD(dre) * 4;
 
-	if (dir.first < 0.0f) // 왼쪽 방향으로 가는 녀석은 오른쪽에서 발사
+	if (dir.y > 0.0f)
+		dir.y *= -1; // 무조건 위 방향으로 가게
+
+	if (dir.x < 0.0f) // 왼쪽 방향으로 가는 녀석은 오른쪽에서 발사
 	{
 		x = 800 + size;
 		y = uidY(dre);
@@ -23,7 +23,6 @@ object::object(int sides, int size)
 		y = uidY(dre);
 	}
 
-
 	for (int i = 0; i < sides; ++i)
 	{
 		GLfloat angle = 2.0 * 3.14f * i / sides;
@@ -33,9 +32,10 @@ object::object(int sides, int size)
 	}
 }
 
-object::object(vector<POINT> input)
+object::object(vector<POINT> input, glm::vec2 d)
 {
 	pts = input;
+	dir = d;
 	sortVertex();
 	color = { uidC(dre), uidC(dre), uidC(dre) };
 }
@@ -55,17 +55,6 @@ void object::sortVertex()
 	return false; });//기준점을 제외한 점을 정렬시킵니다.
 
 	vector<POINT> res = pts;//그라함 스캔으로 볼록 다각형의 꼭지점을 찾아봅니다.
-}
-
-void object::sliceMove(int dir)
-{
-	// 잘랐을때 dir y축대칭 갈기면 될듯
-	if (dir <= 0)
-		for (POINT& i : pts)
-			i.x -= 10;
-	else
-		for (POINT& i : pts)
-			i.x += 10;
 }
 
 void object::render(GLuint vbo[])
@@ -106,16 +95,24 @@ void object::remove()
 
 void object::move()
 {
-	gravity *= 1.06f; // 요기 값 잘 조절해서 어떻게 해볼 것
-	for (int i = 0; i < pts.size(); ++i)
+	if (isput)
 	{
-		POINT tmp = pts[i];
-		tmp.x += 800, tmp.y += 800;
-		tmp.x += dir.first * 10;
-		tmp.y += dir.second * 10;
-		tmp.y += gravity;
-		tmp.x -= 800, tmp.y -= 800;
-		pts[i] = tmp;
+		for (int i = 0; i < pts.size(); ++i)
+			pts[i].x += dir.x * 20;
+	}
+	else
+	{
+		gravity += 1.0f; // 요기 값 잘 조절해서 어떻게 해볼 것
+		for (int i = 0; i < pts.size(); ++i)
+		{
+			POINT tmp = pts[i];
+			tmp.x += 800, tmp.y += 800;
+			tmp.x += dir.x * 20;
+			tmp.y += dir.y * 20;
+			tmp.y += gravity;
+			tmp.x -= 800, tmp.y -= 800;
+			pts[i] = tmp;
+		}
 	}
 }
 
@@ -125,6 +122,9 @@ pair<bool, pair<vector<POINT>, vector<POINT>>> object::isCross(POINT pt1, POINT 
 	vector<POINT> v;
 	vector<POINT> left;
 	vector<POINT> right;
+
+	if (isput)
+		return { breturn, {left, right} };
 
 	for (int i = 0; i < pts.size(); ++i)
 	{
@@ -168,10 +168,40 @@ pair<bool, pair<vector<POINT>, vector<POINT>>> object::isCross(POINT pt1, POINT 
 		right.push_back(v[1]);
 		left.push_back(v[0]);
 		right.push_back(v[0]);
-
 	}
 
-
 	return { breturn, {left, right} };
+}
+
+bool object::isRemove()
+{
+	auto a = min_element(pts.begin(), pts.end(), [](const POINT& a, const POINT& b) {return a.y < b.y; });
+	
+	if (a->y >= 800) 
+		return true;
+	return false;
+}
+
+bool object::isIntersect(POINT pt, glm::vec2 d)
+{
+	POINT tmp = { 0,0 };
+
+	for (int i = 0; i < pts.size(); ++i)
+	{
+		tmp.x += pts[i].x;
+		tmp.y += pts[i].y;
+	}
+
+	tmp.x /= pts.size();
+	tmp.y /= pts.size();
+
+	if (tmp.y > pt.y && (tmp.x < pt.x + 200 && tmp.x > pt.x))
+	{
+		isput = true;
+		dir.x = d.x;
+		dir.y = 0.0f;
+		return true;
+	}
+	return false;
 }
 

@@ -28,6 +28,11 @@ glm::vec3 dragLine[2];
 POINT linePt[2];
 glm::vec3 lineColor[2] = { {0.0f, 1.0f, 1.0f }, {0.0f, 1.0f, 1.0f} };
 
+POINT basketPt[4] = { {400, 760}, {400, 800}, {600, 800}, {600, 760} };
+glm::vec3 basket[4];
+glm::vec3 basketColor[4] = { {1.0f, 1.0f, 0.0}, {1.0f, 1.0f, 0.0}, {1.0f, 1.0f, 0.0}, {1.0f, 1.0f, 0.0} };
+glm::vec2 basketDir = {1.0f, 0.0f};
+
 void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 {
 	//--- 윈도우 생성하기
@@ -86,6 +91,14 @@ GLvoid drawScene()
 		glDrawArrays(GL_LINES, 0, 2);
 	}
 
+
+	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * 4, basket, GL_DYNAMIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * 4, basketColor, GL_DYNAMIC_DRAW);
+
+	glDrawArrays(GL_POLYGON, 0, 4);
+
 	glDisableVertexAttribArray(PosLocation); // Disable 필수!
 	glDisableVertexAttribArray(ColorLocation);
 
@@ -125,19 +138,64 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 
 GLvoid TimerFunction(int value)
 {
-	/*cnt++;
+	cnt++;
 
 	if (cnt >= 10)
 	{
 		v.push_back({ uidS(dre), 30 });
 		cnt = 0;
-	}*/
+	}
 
 	for (object& i : v)
 		i.move();
 
 	for (object& i : v)
 		i.update();
+	
+	for (int i = 0; i < 4; ++i)
+	{
+		basketPt[i].x += basketDir.x * 20;
+	}
+
+	auto a = min_element(basketPt, basketPt + 4, [](const POINT& a, const POINT& b) {return a.x < b.x; });
+	auto b = max_element(basketPt, basketPt + 4, [](const POINT& a, const POINT& b) {return a.x < b.x; });
+	if (a->x <= 0)
+	{
+		int dx = 0 - a->x;
+		for (int i = 0; i < 4; ++i)
+			basketPt[i].x -= dx;
+		basketDir.x *= -1.0f;
+	}
+	if (b->x >= 800)
+	{
+		int dx = 800 - b->x;
+		for (int i = 0; i < 4; ++i)
+			basketPt[i].x += dx;
+		basketDir.x *= -1.0f;
+	}
+
+	for (int i = 0; i < 4; ++i)
+	{
+		pair<float, float> tmp = WintoOpenGL(basketPt[i]);
+		basket[i].x = tmp.first;
+		basket[i].y = tmp.second;
+		basket[i].z = 0.0f;
+	}
+
+	for (int i = 0; i < v.size(); ++i)
+	{
+		if (v[i].isRemove())
+		{
+			i--;
+			v[i+1].remove();
+			v.erase(v.begin() + (i + 1));
+		}
+	}
+
+	for (object& i : v)
+	{
+		i.isIntersect(basketPt[0], basketDir);
+	}
 	
 
 	glutPostRedisplay();
@@ -165,16 +223,24 @@ GLvoid Mouse(int button, int state, int x, int y)
 			pair<bool, pair<vector<POINT>, vector<POINT>>> tmp = v[count].isCross(linePt[0], linePt[1]);
 			if (tmp.first)
 			{
-				for (int j = 0; j < tmp.second.first.size(); ++j)
+				// 좌표 확인 용
+				/*for (int j = 0; j < tmp.second.first.size(); ++j)
 					cout << tmp.second.first[j].x << ", " << tmp.second.first[j].y << endl;
 				for (int j = 0; j < tmp.second.second.size(); ++j)
-					cout << tmp.second.second[j].x << ", " << tmp.second.second[j].y << endl;
+					cout << tmp.second.second[j].x << ", " << tmp.second.second[j].y << endl;*/
 
+				glm::vec2 tmpdir = v[count].GETDIR();
 
-				v.push_back({ tmp.second.first });
-				v.back().sliceMove(-1);
-				v.push_back({ tmp.second.second });
-				v.back().sliceMove(1);
+				if (tmpdir.x < 0.0f)
+				{
+					v.push_back({ tmp.second.first, {tmpdir.x / 2.0f, tmpdir.y} });
+					v.push_back({ tmp.second.second, {tmpdir.x / -2.0f, tmpdir.y} });
+				}
+				else
+				{
+					v.push_back({ tmp.second.first, {tmpdir.x / -2.0f, tmpdir.y} });
+					v.push_back({ tmp.second.second, {tmpdir.x / 2.0f, tmpdir.y} });
+				}
 				
 				arr.push_back(count);
 			}
