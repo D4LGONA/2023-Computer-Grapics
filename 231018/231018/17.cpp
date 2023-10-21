@@ -3,7 +3,6 @@
 random_device rd;
 mt19937 dre(rd());
 uniform_real_distribution<float> uidC{ 0.0f, 1.0f }; // 랜덤 컬러 생성
-uniform_int_distribution uidS{ 0,3 };
 
 GLuint vao, vbo[2], ebo;
 
@@ -36,7 +35,6 @@ struct object
 };
 
 object objs[4];
-
 POINT mousept;
 
 vector<glm::vec3> lines = { 
@@ -51,14 +49,9 @@ vector<glm::vec3> lineColor = {
 	{0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}
 };
 
-vector<glm::vec3> cube;
-vector<glm::vec3> cubeColor;
-vector<unsigned int> cubeIdx;
-vector<glm::vec3> spiralPt;
-vector<glm::vec3> spiralColor;
-
 glm::vec3 transitionL{ 0.5f, 0.0f, 0.0f };
 glm::vec3 transitionR{ -0.5f, 0.0f, 0.0f };
+
 int angleY = 0;
 int angleZ = 0;
 
@@ -68,7 +61,6 @@ object* Right = nullptr;
 object* Left = nullptr;
 
 bool spiral = false;
-int spCount = 0;
 
 bool MoveOrigin = false;
 bool ToOrigin = true;
@@ -90,18 +82,6 @@ float dist(int x1, int y1, int x2, int y2)
 
 int length = 0;
 
-void initSpiral() //여기 해야 함
-{
-	float R = 0.0f;
-
-	for (int i = 0; i < 1170; i += 10)
-	{
-		spiralPt.push_back({ R * cos(i * 3.14f / 180.), 0.0f,  R * sin(i * 3.14f / 180.) });
-		spiralColor.push_back({ 0.0f,0.0f,0.0f });
-		R += 0.01f;
-	}
-}
-
 void update() // 매트릭스 초기화하고 다시 넘겨 줄 것임
 {
 	for (int i = 0; i < 4; ++i)
@@ -111,18 +91,16 @@ void update() // 매트릭스 초기화하고 다시 넘겨 줄 것임
 
 		objs[i].matrix = glm::scale(objs[i].matrix, glm::vec3(Gscale, Gscale, Gscale));
 		objs[i].matrix = glm::rotate(objs[i].matrix, glm::radians(-45.0f), glm::vec3(1.0f, 1.0f, 0.0f)); // 전체 돌린 것
-		objs[i].matrix = glm::translate(objs[i].matrix, objs[i].transition); // 이동
+		//if(angleY % 180 != 0 || angleZ % 180 != 0)
+		//	objs[i].matrix = glm::translate(objs[i].matrix, -objs[i].transition); // 이동
 		objs[i].matrix = glm::rotate(objs[i].matrix, glm::radians(float(angleY)), glm::vec3(0.0f, 1.0f, 0.0f)); // 공전인가?
 		objs[i].matrix = glm::rotate(objs[i].matrix, glm::radians(float(angleZ)), glm::vec3(0.0f, 0.0f, 1.0f)); // 공전인가?
+		//objs[i].matrix = glm::translate(objs[i].matrix, objs[i].transition); // 이동
 		objs[i].matrix = glm::translate(objs[i].matrix, objs[i].transition); // 이동
-		objs[i].matrix = glm::translate(objs[i].matrix, -objs[i].transition); // 이동
-		if (!spiral)
-		{
-			if(&objs[i] == Left)
-				objs[i].matrix = glm::translate(objs[i].matrix, transitionL); // 이동
-			if (&objs[i] == Right)
-				objs[i].matrix = glm::translate(objs[i].matrix, transitionR); // 이동
-		}
+		if(&objs[i] == Left)
+			objs[i].matrix = glm::translate(objs[i].matrix, transitionL); // 이동
+		if (&objs[i] == Right)
+			objs[i].matrix = glm::translate(objs[i].matrix, transitionR); // 이동
 		objs[i].matrix = glm::rotate(objs[i].matrix, glm::radians(float(objs[i].angleY)), glm::vec3(0.0f, 1.0f, 0.0f)); // 자전
 		objs[i].matrix = glm::rotate(objs[i].matrix, glm::radians(float(objs[i].angleX)), glm::vec3(1.0f, 0.0f, 0.0f)); //
 		objs[i].matrix = glm::scale(objs[i].matrix, glm::vec3(objs[i].scale, objs[i].scale, objs[i].scale));
@@ -131,12 +109,12 @@ void update() // 매트릭스 초기화하고 다시 넘겨 줄 것임
 
 void bind()
 {
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+	/*glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * cubeIdx.size(), cubeIdx.data(), GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * cube.size(), cube.data(), GL_DYNAMIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * cubeColor.size(), cubeColor.data(), GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * cubeColor.size(), cubeColor.data(), GL_DYNAMIC_DRAW);*/
 }
 
 void Reset()
@@ -155,6 +133,9 @@ void Reset()
 
 	Left = &objs[0];
 	Right = &objs[1];
+
+	/*Left->transition = transitionL;
+	Right->transition = transitionR;*/
 }
 
 void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
@@ -238,26 +219,15 @@ GLvoid drawScene()
 		break;
 	}
 
-	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * lines.size(), lines.data(), GL_STATIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * lineColor.size(), lineColor.data(), GL_STATIC_DRAW);
-
 	glm::mat4 axis{ 1.0f };
 	axis = glm::rotate(axis, glm::radians(-45.0f), glm::vec3(1.0f, 1.0f, 0.0f));
+	//axis = glm::rotate(axis, glm::radians(float(angleY)), glm::vec3(0.0f, 1.0f, 0.0f));
 	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(axis));
 
 	for (int i = 0; i < lines.size(); i += 2)
 	{
 		glDrawArrays(GL_LINES, i, i + 2);
 	}
-
-	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * spiralPt.size(), spiralPt.data(), GL_STATIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * spiralColor.size(), spiralColor.data(), GL_STATIC_DRAW);
-
-	glDrawArrays(GL_LINE_STRIP, 0, spiralPt.size());
 
 	// 그리기 // 
 	
@@ -290,17 +260,11 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 		Right->transition.y += 0.1f;
 		break;
 	case 'Y':
-		Left->transition.y -= 0.1f;
-		Right->transition.y -= 0.1f;
 		break;
 
 	case 'z':
-		Left->transition.z += 0.1f;
-		Right->transition.z += 0.1f;
 		break;
 	case 'Z':
-		Left->transition.z -= 0.1f;
-		Right->transition.z -= 0.1f;
 		break;
 
 	case 's':
@@ -327,9 +291,11 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 
 	case 'r': // 스파이럴
 	{
-		initSpiral();
-		Right->transition = { spiralPt[spCount].x, 0.0f,spiralPt[spCount].z };
-		Left->transition = { spiralPt[spiralPt.size() - 1 - spCount].x, 0.0f,spiralPt[spiralPt.size() - 1 - spCount].z };
+		/*pt = 
+		while (true)
+		{
+
+		}*/
 		spiral = true;
 		break;
 
@@ -385,18 +351,37 @@ GLvoid TimerFunction(int value)
 			Left->transition.x += 0.1f;
 			if (Right->transition.x + transitionR.x <= tmp.first)
 			{
+				/*Right->transition.x += 0.1f;
+				Left->transition.x -= 0.1f;*/
+				/*Right->transition.x = 0.0f;
+				Left->transition.x = 0.0f;*/
 				MoveOrigin = false;
 				ToOrigin = true;
 			}
+		}/*
+		if (ToOrigin)
+		{
+			Right->transition.x += 0.1f;
+			Left->transition.x -= 0.1f;
+			if (Right->transition.x >= Left->transition.x)
+				ToOrigin = false;
 		}
+		else
+		{
+			Right->transition.x -= 0.1f;
+			Left->transition.x += 0.1f;
+			if (Right->transition.x <= -1.0f && Left->transition.x >= 1.0f)
+				ToOrigin = true;
+		}*/
 	}
 
 	if (spiral)
 	{
-		Right->transition = { spiralPt[spCount].x, 0.0f,spiralPt[spCount].z };
-		Left->transition = { spiralPt[spiralPt.size() - 1 - spCount].x, 0.0f,spiralPt[spiralPt.size() - 1 - spCount].z};
-		
-		spCount = (spCount + 1) % spiralPt.size();
+		Right->transition.x += 0.01f * dir.x;
+		Left->transition.x += 0.01f * dir.y;
+		angleY += dir.x * 5;
+		if (Right->transition.x >= 1.0f || Left->transition.x >= 1.0f)
+			dir = { dir.x * -1, dir.y * -1 };
 	}
 
 	if (swapXZ)
@@ -465,9 +450,9 @@ void InitBuffer()
 	glBindVertexArray(vao); // VAO를 바인드합니다.
 	glGenBuffers(2, vbo); // 2개의 VBO를 생성하고 할당합니다.
 
-	glGenBuffers(1, &ebo);
+	/*glGenBuffers(1, &ebo);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int), cubeIdx.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int), cubeIdx.data(), GL_STATIC_DRAW);*/
 
 	// 첫 번째 VBO에 정점 좌표 데이터를 설정합니다.
 	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
@@ -545,7 +530,7 @@ void ReadObj(FILE* path)
 	}
 
 
-	for (int i = 0; i < vertexnum; ++i)
+	/*for (int i = 0; i < vertexnum; ++i)
 	{
 		cube.push_back(vertex[i]);
 		cubeColor.push_back({ uidC(dre),uidC(dre),uidC(dre) });
@@ -556,7 +541,7 @@ void ReadObj(FILE* path)
 		cubeIdx.push_back(face[i].x);
 		cubeIdx.push_back(face[i].y);
 		cubeIdx.push_back(face[i].z);
-	}
+	}*/
 }
 
 
