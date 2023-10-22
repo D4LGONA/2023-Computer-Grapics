@@ -1,8 +1,5 @@
 #include "stdafx.h"
-
-random_device rd;
-mt19937 dre(rd());
-uniform_real_distribution<float> uidC{ 0.0f, 1.0f }; // 랜덤 컬러 생성
+#include "object.h"
 
 GLuint vao, vbo[2], ebo;
 
@@ -21,21 +18,19 @@ GLvoid Mouse(int button, int state, int x, int y);
 GLvoid Motion(int x, int y);
 void InitBuffer();
 char* filetobuf(const char*);
-void ReadObj(FILE* path);
 
-struct object
-{
-	GLUquadric* obj;
-	glm::mat4 matrix{ 1.0f };
-	int angleX = 0;
-	int angleY = 0;
-	glm::vec3 transition{0.0f, 0.0f, 0.0f};
-	int state = 0;
-	float scale = 0.2f;
-};
-
-object objs[4];
 POINT mousept;
+vector<object> objs;
+object* selected = nullptr;
+bool isDepthTest = true;
+bool rotatingY = false;
+bool topRotate = false;
+bool openFront = false;
+bool slideSide = false;
+bool backs = false;
+bool openall = false;
+bool isOpen[6] = { false, false, false, false, false, false };
+//glm::mat4 view = glm::mat4(1.0f);
 
 vector<glm::vec3> lines = { 
 	{1.0f, 0.0f, 0.0f}, {-1.0f, 0.0f, 0.0f},
@@ -49,93 +44,16 @@ vector<glm::vec3> lineColor = {
 	{0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}
 };
 
-glm::vec3 transitionL{ 0.5f, 0.0f, 0.0f };
-glm::vec3 transitionR{ -0.5f, 0.0f, 0.0f };
-
-int angleY = 0;
-int angleZ = 0;
-
-float Gscale = 1.0f;
-
-object* Right = nullptr;
-object* Left = nullptr;
-
-bool spiral = false;
-
-bool MoveOrigin = false;
-bool ToOrigin = true;
-
-bool Swap = false;
-
-bool swapXZ = false;
-
-bool swapYZ = false;
-
-pair<float, float> tmp;
-
-POINT dir = { -1, 1 };
-
-float dist(int x1, int y1, int x2, int y2)
-{
-	return sqrt(powf(x2 - x1, 2) + powf(y2 - y1, 2));
-}
-
-int length = 0;
-
-void update() // 매트릭스 초기화하고 다시 넘겨 줄 것임
-{
-	for (int i = 0; i < 4; ++i)
-	{
-		glm::mat4 tmp{ 1.0f };
-		objs[i].matrix = tmp;
-
-		objs[i].matrix = glm::scale(objs[i].matrix, glm::vec3(Gscale, Gscale, Gscale));
-		objs[i].matrix = glm::rotate(objs[i].matrix, glm::radians(-45.0f), glm::vec3(1.0f, 1.0f, 0.0f)); // 전체 돌린 것
-		//if(angleY % 180 != 0 || angleZ % 180 != 0)
-		//	objs[i].matrix = glm::translate(objs[i].matrix, -objs[i].transition); // 이동
-		objs[i].matrix = glm::rotate(objs[i].matrix, glm::radians(float(angleY)), glm::vec3(0.0f, 1.0f, 0.0f)); // 공전인가?
-		objs[i].matrix = glm::rotate(objs[i].matrix, glm::radians(float(angleZ)), glm::vec3(0.0f, 0.0f, 1.0f)); // 공전인가?
-		//objs[i].matrix = glm::translate(objs[i].matrix, objs[i].transition); // 이동
-		objs[i].matrix = glm::translate(objs[i].matrix, objs[i].transition); // 이동
-		if(&objs[i] == Left)
-			objs[i].matrix = glm::translate(objs[i].matrix, transitionL); // 이동
-		if (&objs[i] == Right)
-			objs[i].matrix = glm::translate(objs[i].matrix, transitionR); // 이동
-		objs[i].matrix = glm::rotate(objs[i].matrix, glm::radians(float(objs[i].angleY)), glm::vec3(0.0f, 1.0f, 0.0f)); // 자전
-		objs[i].matrix = glm::rotate(objs[i].matrix, glm::radians(float(objs[i].angleX)), glm::vec3(1.0f, 0.0f, 0.0f)); //
-		objs[i].matrix = glm::scale(objs[i].matrix, glm::vec3(objs[i].scale, objs[i].scale, objs[i].scale));
-	}
-}
-
-void bind()
-{
-	/*glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * cubeIdx.size(), cubeIdx.data(), GL_STATIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * cube.size(), cube.data(), GL_DYNAMIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * cubeColor.size(), cubeColor.data(), GL_DYNAMIC_DRAW);*/
-}
-
 void Reset()
 {
-	angleY = 0;
+	objs.clear();
+	objs.push_back({ 1.0f,1.0f,1.0f, 0, vbo });
+	objs.push_back({ 1.0f,1.0f,1.0f, 1, vbo });
+	selected = &objs[0];
 
-	for (int i = 0; i < 4; ++i)
-	{
-		objs[i].obj = gluNewQuadric();
-		gluQuadricDrawStyle(objs[i].obj, GLU_LINE);
-		gluQuadricNormals(objs[i].obj, GLU_SMOOTH);
-		gluQuadricOrientation(objs[i].obj, GLU_OUTSIDE);
-		objs[i].transition = { 0.0f, 0.0f, 0.0f };
-		objs[i].state = i;
-	}
-
-	Left = &objs[0];
-	Right = &objs[1];
-
-	/*Left->transition = transitionL;
-	Right->transition = transitionR;*/
+	proj = glm::mat4(1.0f);
+	proj = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 50.0f); //--- 투영 공간 설정: fovy, aspect, near, far
+	proj = glm::translate(proj, glm::vec3(0.0, 0.0, -5.0));
 }
 
 void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
@@ -144,7 +62,7 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
 	glutInitWindowPosition(100, 100);
-	glutInitWindowSize(800, 800);
+	glutInitWindowSize(WIDTH, HEIGHT);
 	glutCreateWindow("Example1");
 	//--- GLEW 초기화하기
 	glewExperimental = GL_TRUE;
@@ -163,76 +81,30 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 
 GLvoid drawScene()
 {
-	glClearColor(0.0f, 1.0f, 1.0f, 1.0f);
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glUseProgram(shaderProgramID);
 	glBindVertexArray(vao);
 	
-	glEnable(GL_DEPTH_TEST);
+	if(isDepthTest)
+		glEnable(GL_DEPTH_TEST); 
+	else
+		glDisable(GL_DEPTH_TEST); 
 
-	// Location 번호 저장
-	int PosLocation = glGetAttribLocation(shaderProgramID, "in_Position"); //	: 0  Shader의 'layout (location = 0)' 부분
-	int ColorLocation = glGetAttribLocation(shaderProgramID, "in_Color"); //	: 1
-	unsigned int modelLocation = glGetUniformLocation(shaderProgramID, "transform");
+	selected->render(vbo, ebo, shaderProgramID);
 
+	//glm::mat4 axis{ 1.0f };
+	//axis = glm::rotate(axis, glm::radians(-45.0f), glm::vec3(1.0f, 1.0f, 0.0f));
+	////axis = glm::rotate(axis, glm::radians(float(angleY)), glm::vec3(0.0f, 1.0f, 0.0f));
+	//glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(axis));
 
-	glEnableVertexAttribArray(PosLocation); // Enable 필수! 사용하겠단 의미
-	glEnableVertexAttribArray(ColorLocation);
-
-	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]); // 정점 좌표용 VBO 바인딩
-	glVertexAttribPointer(PosLocation, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), 0);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo[1]); // 색상 데이터용 VBO 바인딩
-	glVertexAttribPointer(ColorLocation, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), 0);
-
-
-	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(Left->matrix));
-	switch (Left->state)
-	{
-	case 0:
-		gluSphere(Left->obj, 1.0f, 20, 20);
-		break;
-	case 1:
-		gluCylinder(Left->obj, 1.0f, 0.0f, 2.0f, 20, 8);
-		break;
-	case 2:
-		gluCylinder(Left->obj, 1.0f, 1.0f, 2.0f, 20, 8);
-		break;
-	case 3:
-		gluSphere(Left->obj, 1.0f, 4, 2);
-		break;
-	}
-
-	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(Right->matrix));
-	switch (Right->state)
-	{
-	case 0:
-		gluSphere(Right->obj, 1.0f, 20, 20);
-		break;
-	case 1:
-		gluCylinder(Right->obj, 1.0f, 0.0f, 2.0f, 20, 8);
-		break;
-	case 2:
-		gluCylinder(Right->obj, 1.0f, 1.0f, 2.0f, 20, 8);
-		break;
-	case 3:
-		gluSphere(Right->obj, 1.0f, 4, 2);
-		break;
-	}
-
-	glm::mat4 axis{ 1.0f };
-	axis = glm::rotate(axis, glm::radians(-45.0f), glm::vec3(1.0f, 1.0f, 0.0f));
-	//axis = glm::rotate(axis, glm::radians(float(angleY)), glm::vec3(0.0f, 1.0f, 0.0f));
-	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(axis));
-
-	for (int i = 0; i < lines.size(); i += 2)
-	{
-		glDrawArrays(GL_LINES, i, i + 2);
-	}
-
-	// 그리기 // 
+	//for (int i = 0; i < lines.size(); i += 2)
+	//{
+	//	glDrawArrays(GL_LINES, i, i + 2);
+	//}
 	
-	glDisableVertexAttribArray(PosLocation); // Disable 필수!
-	glDisableVertexAttribArray(ColorLocation);
+	//glDisableVertexAttribArray(PosLocation); // Disable 필수!
+	//glDisableVertexAttribArray(ColorLocation);
 
 	glutSwapBuffers(); //--- 화면에 출력하기
 }
@@ -246,80 +118,93 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 {
 	switch (key)
 	{
-	case 'x':
-		Left->transition.x += 0.1f;
-		Right->transition.x += 0.1f;
-		break;
-	case 'X':
-		Left->transition.x -= 0.1f;
-		Right->transition.x -= 0.1f;
+	case 'h':
+		isDepthTest = !isDepthTest;
 		break;
 
-	case 'y':
-		Left->transition.y += 0.1f;
-		Right->transition.y += 0.1f;
-		break;
-	case 'Y':
+	case 'y': // y축 자전
+		rotatingY = !rotatingY;
+		selected->SETROTATING(rotatingY);
 		break;
 
-	case 'z':
-		break;
-	case 'Z':
-		break;
-
-	case 's':
-		if(Left->scale < 2.0f)
-			Left->scale += 0.05f;
-		if(Right->scale < 2.0f)
-			Right->scale += 0.05f;
+	case 't': // 육면체 윗면 회전?
+		selected = &objs[0];
+		selected->bind(vbo);
+		topRotate = !topRotate;
+		selected->SETTROTATING(topRotate);
 		break;
 		
-	case 'S':
-		if(Left->scale > 0.05f)
-			Left->scale -= 0.05f;
-		if(Right->scale > 0.05f)
-			Right->scale -= 0.05f;
+	case 'f': // 앞면을 열고 닫아요?
+		selected = &objs[0];
+		selected->bind(vbo);
+		openFront = !openFront;
+		selected->SETOPENF(openFront);
 		break;
 
-	case '+':
-		Gscale += 0.1f;
-		break;
-		
-	case '-':
-		Gscale -= 0.1f;
-		break;
-
-	case 'r': // 스파이럴
-	{
-		/*pt = 
-		while (true)
-		{
-
-		}*/
-		spiral = true;
+	case 's': // 옆면을 슬라이드해서 열고 닫기
+		selected = &objs[0];
+		selected->bind(vbo);
+		slideSide = !slideSide;
+		selected->SETSLIDES(slideSide);
 		break;
 
-	}
-
-	case 't': // 원점으로 이동했다 제자리
-		tmp.first = Right->transition.x + transitionR.x;
-		tmp.second = Left->transition.x + transitionL.x;
-		MoveOrigin = true;
+	case 'b': // 뒷면 열고 닫기 ㅠㅠ? 크기 변경?
+		selected = &objs[0];
+		selected->bind(vbo);
+		backs = !backs;
+		selected->SETBACK(backs);
 		break;
 
-	case '1': // 두 도형이 중심점을 통과하며 상대 자리로 이동
-		Swap = true;
-		tmp.first = Right->transition.x + transitionR.x;
-		tmp.second = Left->transition.x + transitionL.x;
+	case 'o': // 사각뿔의 모든 면들이 열린다 / 닫힌다
+		selected = &objs[1];
+		selected->bind(vbo);
+		openall = !openall;
+		selected->SETOPENALL(openall);
+		isOpen[0] = !isOpen[0];
+		selected->SETOPEN(0, isOpen[0]);
+		isOpen[1] = !isOpen[1];
+		selected->SETOPEN(1, isOpen[1]);
+		isOpen[4] = !isOpen[4];
+		selected->SETOPEN(4, isOpen[4]);
+		isOpen[5] = !isOpen[5];
+		selected->SETOPEN(5, isOpen[5]);
+		break;
 
+	case '0': // 한개씩 열기
+		selected = &objs[1];
+		selected->bind(vbo);
+		isOpen[0] = !isOpen[0];
+		selected->SETOPEN(0, isOpen[0]);
 		break;
-	case '2': // 뭔소리지
-		swapXZ = true;
+	case '1': // 한개씩 열기
+		selected = &objs[1];
+		selected->bind(vbo);
+		isOpen[1] = !isOpen[1];
+		selected->SETOPEN(1, isOpen[1]);
 		break;
-	case '3': // 이건 뭔소리지
-		swapYZ = true;
+	case '4': // 한개씩 열기
+		selected = &objs[1];
+		selected->bind(vbo);
+		isOpen[4] = !isOpen[4];
+		selected->SETOPEN(4, isOpen[4]);
+		break;
+	case '5': // 한개씩 열기
+		selected = &objs[1];
+		selected->bind(vbo);
+		isOpen[5] = !isOpen[5];
+		selected->SETOPEN(5, isOpen[5]);
 		break;
 
+	case 'p': // 직각투영?
+		proj = glm::mat4(1.0f);
+		proj = glm::ortho(-2.0f, 2.0f, -2.0f, 2.0f, -2.0f, 2.0f);
+		break;
+
+	case 'P': // 원근투영?
+		proj = glm::mat4(1.0f);
+		proj = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 50.0f); //--- 투영 공간 설정: fovy, aspect, near, far
+		proj = glm::translate(proj, glm::vec3(0.0, 0.0, -5.0));
+		break;
 
 	case 'R': // reset
 		Reset();
@@ -335,92 +220,8 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 
 GLvoid TimerFunction(int value)
 {
-	if (MoveOrigin)
-	{
-
-		if (ToOrigin)
-		{
-			Right->transition.x += 0.1f;
-			Left->transition.x -= 0.1f;
-			if (Right->transition.x + transitionR.x >= 0.0f) 
-				ToOrigin = false;
-		}
-		else
-		{
-			Right->transition.x -= 0.1f;
-			Left->transition.x += 0.1f;
-			if (Right->transition.x + transitionR.x <= tmp.first)
-			{
-				/*Right->transition.x += 0.1f;
-				Left->transition.x -= 0.1f;*/
-				/*Right->transition.x = 0.0f;
-				Left->transition.x = 0.0f;*/
-				MoveOrigin = false;
-				ToOrigin = true;
-			}
-		}/*
-		if (ToOrigin)
-		{
-			Right->transition.x += 0.1f;
-			Left->transition.x -= 0.1f;
-			if (Right->transition.x >= Left->transition.x)
-				ToOrigin = false;
-		}
-		else
-		{
-			Right->transition.x -= 0.1f;
-			Left->transition.x += 0.1f;
-			if (Right->transition.x <= -1.0f && Left->transition.x >= 1.0f)
-				ToOrigin = true;
-		}*/
-	}
-
-	if (spiral)
-	{
-		Right->transition.x += 0.01f * dir.x;
-		Left->transition.x += 0.01f * dir.y;
-		angleY += dir.x * 5;
-		if (Right->transition.x >= 1.0f || Left->transition.x >= 1.0f)
-			dir = { dir.x * -1, dir.y * -1 };
-	}
-
-	if (swapXZ)
-	{
-		angleY += 5;
-		if (angleY % 180 == 0) 
-			swapXZ = false;
-	}
-
-	if (swapYZ)
-	{
-		angleZ += 5;
-		if (angleZ % 180 == 0)
-			swapYZ = false;
-	}
-
-	if (Swap)
-	{
-		if (Right->transition.x + transitionR.x < tmp.second)
-		{
-			Right->transition.x += 0.1f;
-			Left->transition.x -= 0.1f;
-			if (Right->transition.x + transitionR.x >= tmp.second) Swap = false;
-		}
-		else
-		{
-			Right->transition.x -= 0.1f;
-			Left->transition.x += 0.1f;
-			if (Right->transition.x + transitionR.x < tmp.second)
-			{
-				Right->transition.x += 0.1f;
-				Left->transition.x -= 0.1f;
-				/*Right->transition.x = 0.0f;
-				Left->transition.x = 0.0f;*/
-				Swap = false;
-			}
-		}
-	}
-	update();
+	for(object& i : objs)
+		i.update();
 
 	glutPostRedisplay();
 	glutTimerFunc(100, TimerFunction, 1);
@@ -472,78 +273,6 @@ void InitBuffer()
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(1);
 }
-
-void ReadObj(FILE* path)
-{
-	char count[128];
-	int vertexnum = 0;
-	int facenum = 0;
-	int uvnum = 0;
-	//--- 1. 전체 버텍스 개수 및 삼각형 개수 세기
-	while (!feof(path))
-	{
-		fscanf(path, "%s", count);
-		if (count[0] == 'v' && count[1] == '\0')
-			vertexnum++;
-		else if (count[0] == 'f' && count[1] == '\0')
-			facenum++;
-		else if (count[0] == 'v' && count[1] == 't' && count[3] == '\0')
-			uvnum++;
-		memset(count, '\0', sizeof(count));
-	}
-	rewind(path);
-	int vertIndex = 0;
-	int faceIndex = 0;
-	int uvIndex = 0;
-	//--- 2. 메모리 할당
-	glm::vec3* vertex = new glm::vec3[vertexnum];
-	glm::vec3* face = new glm::vec3[facenum];
-	glm::vec3* uvdata = new glm::vec3[facenum];
-	glm::vec2* uv = new glm::vec2[uvnum];
-	char bind[128];
-
-	while (!feof(path)) {
-		fscanf(path, "%s", bind);
-		if (bind[0] == 'v' && bind[1] == '\0') {
-			fscanf(path, "%f %f %f\n",
-				&vertex[vertIndex].x, &vertex[vertIndex].y, &vertex[vertIndex].z);
-			vertIndex++;
-		}
-		else if (bind[0] == 'f' && bind[1] == '\0') {
-			unsigned int temp_face[3], temp_uv[3], temp_normal[3];
-			fscanf(path, "%d/%d/%d %d/%d/%d %d/%d/%d\n",
-				&temp_face[0], &temp_uv[0], &temp_normal[0],
-				&temp_face[1], &temp_uv[1], &temp_normal[1],
-				&temp_face[2], &temp_uv[2], &temp_normal[2]);
-			face[faceIndex].x = temp_face[0]-1;
-			face[faceIndex].y = temp_face[1]-1;
-			face[faceIndex].z = temp_face[2]-1;
-			uvdata[faceIndex].x = temp_uv[0];
-			uvdata[faceIndex].y = temp_uv[1];
-			uvdata[faceIndex].z = temp_uv[2];
-			faceIndex++;
-		}
-		else if (bind[0] == 'v' && bind[1] == 't' && bind[2] == '\0') {
-			fscanf(path, "%f %f\n", &uv[uvIndex].x, &uv[uvIndex].y);
-			uvIndex++;
-		}
-	}
-
-
-	/*for (int i = 0; i < vertexnum; ++i)
-	{
-		cube.push_back(vertex[i]);
-		cubeColor.push_back({ uidC(dre),uidC(dre),uidC(dre) });
-	}
-
-	for (int i = 0; i < facenum; ++i)
-	{
-		cubeIdx.push_back(face[i].x);
-		cubeIdx.push_back(face[i].y);
-		cubeIdx.push_back(face[i].z);
-	}*/
-}
-
 
 void make_shaderProgram()
 {

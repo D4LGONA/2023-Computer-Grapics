@@ -16,8 +16,13 @@
 #include <gl/glm/gtc/matrix_transform.hpp>
 using namespace std;
 
-struct vertex
-{
-	vector<glm::vec3> pt;
-	vector<glm::vec3> c;
-};
+#define WIDTH 800
+#define HEIGHT 800
+
+extern std::random_device rd;
+extern std::mt19937 dre;
+extern std::uniform_real_distribution<float> uidC;
+extern glm::mat4 proj;
+
+pair<float, float> WintoOpenGL(POINT pt);
+float dist(POINT p1, POINT p2);
