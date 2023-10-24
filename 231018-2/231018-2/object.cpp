@@ -15,8 +15,10 @@ void object::update()
 		else
 			rotation.y -= 5.0f;
 	}
-	bigspin += 5.0f;
+	bigspin += tbigspin;
 
+	if (isSpinZ)
+		rotation.z += 5.0f;
 	
 }
 
@@ -53,26 +55,70 @@ void object::render(GLuint vbo[], GLuint ebo, GLuint shaderProgramID)
 	glDisableVertexAttribArray(ColorLocation);
 }
 
-object::object(float r, glm::vec3 t, glm::vec3 R) : radius{ r }, transition{ t }, rotation{ R }
+object::object(float r, glm::vec3 t, glm::vec3 R, float speed) : radius{ r }, transition{ t }, tbigspin{speed}
 {
+	rotation = { R.x, R.y, -R.z };
 	orbit = R.z;
 	o = gluNewQuadric();
 	gluQuadricDrawStyle(o, GLU_LINE);
 }
 
-void object::setmatrix(glm::vec3 r, glm::vec3 t, glm::vec3 s)
+//srt가 부모, s2t2r2가 할머니
+void object::setmatrix(glm::vec3 r, glm::vec3 t, glm::vec3 s, glm::vec3 r2, glm::vec3 t2, glm::vec3 s2, float orbit )
 {
 	matrix = glm::mat4(1.0f);
 
 
-	matrix = glm::rotate(matrix, glm::radians(orbit), { 0.0f,0.0f,1.0f });
 	matrix = glm::translate(matrix, t);
 	matrix = glm::rotate(matrix, glm::radians(bigspin), { 0.0f,1.0f,0.0f });
-	/*matrix = glm::rotate(matrix, glm::radians(r.z), { 0.0f,0.0f,1.0f });
+
+	// 나
+	matrix = glm::translate(matrix, transition);
+	matrix = glm::rotate(matrix, glm::radians(rotation.z), { 0.0f,0.0f,1.0f });
+	matrix = glm::rotate(matrix, glm::radians(rotation.y), { 0.0f,1.0f,0.0f });
+	matrix = glm::rotate(matrix, glm::radians(rotation.x), { 1.0f,0.0f,0.0f });
+	matrix = glm::scale(matrix, scale);
+}
+
+void object::setmatrix(glm::mat4 p)
+{
+	matrix = glm::mat4(1.0f);
+	glm::vec3 t;
+	t.x = p[3][0] + transition.x;
+	t.y = p[3][1] + transition.y;
+	t.z = p[3][2] + transition.z;
+
+	matrix = glm::translate(matrix, {p[3][0], p[3][1], p[3][2]});
+	matrix = glm::rotate(matrix, glm::radians(rotZ), { 0.0f,0.0f,1.0f });
+	matrix = glm::rotate(matrix, glm::radians(orbit), { 0.0f,0.0f,1.0f });
+	matrix = glm::rotate(matrix, glm::radians(bigspin), { 0.0f,1.0f,0.0f });
+	matrix = glm::translate(matrix, {-p[3][0], -p[3][1], -p[3][2]});
+
+	matrix = glm::translate(matrix, t);
+	// 나
+	matrix = glm::translate(matrix, transition);
+	matrix = glm::rotate(matrix, glm::radians(rotation.z), { 0.0f,0.0f,1.0f });
+	matrix = glm::rotate(matrix, glm::radians(rotation.y), { 0.0f,1.0f,0.0f });
+	matrix = glm::rotate(matrix, glm::radians(rotation.x), { 1.0f,0.0f,0.0f });
+	matrix = glm::scale(matrix, scale);
+}
+
+
+void object::setmatrix(glm::vec3 r, glm::vec3 t, glm::vec3 s)
+{
+	matrix = glm::mat4(1.0f);
+	
+	matrix = glm::rotate(matrix, glm::radians(rotZ), { 0.0f,0.0f,1.0f });
+	// 내 부모
+	matrix = glm::translate(matrix, t);
+	matrix = glm::rotate(matrix, glm::radians(orbit), { 0.0f,0.0f,1.0f });
+	matrix = glm::rotate(matrix, glm::radians(bigspin), { 0.0f,1.0f,0.0f });
+	matrix = glm::rotate(matrix, glm::radians(r.z), { 0.0f,0.0f,1.0f });
 	matrix = glm::rotate(matrix, glm::radians(r.y), { 0.0f,1.0f,0.0f });
-	matrix = glm::rotate(matrix, glm::radians(r.x), { 1.0f,0.0f,0.0f });*/
+	matrix = glm::rotate(matrix, glm::radians(r.x), { 1.0f,0.0f,0.0f });
 	matrix = glm::translate(matrix, -t);
 
+	//  나
 	matrix = glm::translate(matrix, transition);
 	matrix = glm::rotate(matrix, glm::radians(rotation.z), { 0.0f,0.0f,1.0f });
 	matrix = glm::rotate(matrix, glm::radians(rotation.y), { 0.0f,1.0f,0.0f });
@@ -83,6 +129,9 @@ void object::setmatrix(glm::vec3 r, glm::vec3 t, glm::vec3 s)
 void object::setmatrix()
 {
 	matrix = glm::mat4(1.0f);
+
+	matrix = glm::rotate(matrix, glm::radians(rotZ), { 0.0f,0.0f,1.0f });
+
 	matrix = glm::translate(matrix, transition);
 	matrix = glm::rotate(matrix, glm::radians(rotation.z), { 0.0f,0.0f,1.0f });
 	matrix = glm::rotate(matrix, glm::radians(rotation.y), { 0.0f,1.0f,0.0f });

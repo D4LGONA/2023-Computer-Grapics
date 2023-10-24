@@ -20,29 +20,38 @@ void InitBuffer();
 char* filetobuf(const char*);
 
 POINT mousept;
-object big = { 0.5f, {0.0f, 0.0f, 0.0f}, {0.0f,0.0f,0.0f} };
+object big = { 0.5f, {0.0f, 0.0f, 0.0f}, {0.0f,0.0f,0.0f}, 0.0f };
 vector<object> mid;
 vector<object> small;
 bool isSpinY = false;
+bool isSpinZ = false;
 
 vector<glm::vec3> pts;
 vector<glm::vec3> c;
 
-void makecurcle()
+void makecircle()
 {
-	for (int i = 0; i < 360; ++i)
+	for (int j = 0; j < 6; ++j)
 	{
-		pts.push_back({ cos(glm::radians(float(i))), sin(glm::radians(float(i))), 0.0f });
-		c.push_back({ 0.0f,1.0f,0.0f });
+		for (int i = 0; i < 360; ++i)
+		{
+			pts.push_back({ sin(glm::radians(float(i))), 0.0f,cos(glm::radians(float(i))) });
+			c.push_back({ 0.0f,1.0f,0.0f });
+		}
 	}
 }
 
 void Reset()
 {
+	makecircle();
 
-	mid.push_back({ 0.3f, {0.0f, 0.0f, 1.0f} , {0.0f, 0.0f, 0.0f} });
-	mid.push_back({ 0.3f, {0.0f, 0.0f, 1.0f} , {0.0f, 0.0f, 45.0f} });
-	mid.push_back({ 0.3f, {0.0f, 0.0f, 1.0f} , {0.0f, 0.0f, -45.0f} });
+	mid.push_back({ 0.3f, {0.5f, 0.0f, 0.0f} , {0.0f, 0.0f, 0.0f} , 4.0f });
+	mid.push_back({ 0.3f, {0.5f, 0.0f, 0.0f} , {0.0f, 0.0f, 45.0f}, 4.0f });
+	mid.push_back({ 0.3f, {0.5f, 0.0f, 0.0f} , {0.0f, 0.0f, -45.0f} , 4.0f});
+
+	small.push_back({ 0.1f, {0.3f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f} , 10.0f});
+	small.push_back({ 0.1f, {0.3f, 0.0f, 0.0f}, {0.0f, 0.0f, -45.0f}, 8.0f });
+	small.push_back({ 0.1f, {0.3f, 0.0f, 0.0f}, {0.0f, 0.0f, +45.0f}, 11.0f });
 
 	proj = glm::mat4(1.0f);
 	proj = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 50.0f); //--- 투영 공간 설정: fovy, aspect, near, far
@@ -81,18 +90,75 @@ GLvoid drawScene()
 	
 
 	glEnable(GL_DEPTH_TEST); 
-	/*glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * pts.size(), pts.data(), GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * c.size(), c.data(), GL_STATIC_DRAW);
 
-	glDrawArrays(GL_LINE_LOOP, 0, pts.size());*/
+
+	glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 2.0f); //--- 카메라 위치
+	glm::vec3 cameraDirection = glm::vec3(0.0f, 0.0f, 0.0f); //--- 카메라 바라보는 방향
+	glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f); //--- 카메라 위쪽 방향
+	glm::mat4 view = glm::mat4(1.0f);
+	view = glm::lookAt(cameraPos, cameraDirection, cameraUp);
+
+	// Location 번호 저장
+	unsigned int PosLocation = glGetAttribLocation(shaderProgramID, "in_Position"); //	: 0  Shader의 'layout (location = 0)' 부분
+	unsigned int ColorLocation = glGetAttribLocation(shaderProgramID, "in_Color"); //	: 1
+	unsigned int modelLocation = glGetUniformLocation(shaderProgramID, "transform");
+	unsigned int viewLocation = glGetUniformLocation(shaderProgramID, "view");
+	unsigned int projLocation = glGetUniformLocation(shaderProgramID, "projection");
+
+	glEnableVertexAttribArray(PosLocation); // Enable 필수! 사용하겠단 의미
+	glEnableVertexAttribArray(ColorLocation);
+
+	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]); // 정점 좌표용 VBO 바인딩
+	glVertexAttribPointer(PosLocation, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), 0);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo[1]); // 색상 데이터용 VBO 바인딩
+	glVertexAttribPointer(ColorLocation, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), 0);
+
+	
+	for (int i = 0; i < 6; ++i)
+	{
+		if (i < 3)
+		{
+			glm::mat4 m = glm::mat4(1.0f);
+
+			m = glm::translate(m, big.transition);
+			m = glm::rotate(m, glm::radians(rotZ), {0.0f, 0.0f, 1.0f});
+			m = glm::rotate(m, glm::radians(mid[i].orbit), { 0.0f, 0.0f, 1.0f });
+			m = glm::translate(m, -big.transition);
+
+			m = glm::translate(m, big.transition);
+			/*m = glm::rotate(m, mid[i].rotation.z, {0.0f, 0.0f, 1.0f });
+			m = glm::rotate(m, mid[i].rotation.y, {0.0f, 1.0f, 0.0f });
+			m = glm::rotate(m, mid[i].rotation.x, {1.0f, 0.0f, 0.0f });*/
+
+			glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(m));
+			glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &view[0][0]);
+			glUniformMatrix4fv(projLocation, 1, GL_FALSE, &proj[0][0]);
+			glDrawArrays(GL_LINE_LOOP, i * 360, 360);
+		}
+		else
+		{
+			glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(small[i-3].matrix));
+			glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &view[0][0]);
+			glUniformMatrix4fv(projLocation, 1, GL_FALSE, &proj[0][0]);
+			glDrawArrays(GL_LINE_LOOP, i * 360, 360);
+		}
+
+		
+	}
+
+
 
 	big.render(vbo, ebo, shaderProgramID);
 	mid[0].render(vbo, ebo, shaderProgramID);
 	mid[1].render(vbo, ebo, shaderProgramID);
 	mid[2].render(vbo, ebo, shaderProgramID);
-
+	small[0].render(vbo, ebo, shaderProgramID);
+	small[1].render(vbo, ebo, shaderProgramID);
+	small[2].render(vbo, ebo, shaderProgramID);
 
 	glutSwapBuffers(); //--- 화면에 출력하기
 }
@@ -118,9 +184,67 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 		big.isSpinY = isSpinY;
 		break;
 
+	case 'w':
+		big.transition.y += 0.2f;
+		/*mid[0].transition.y += 0.2f;
+		mid[1].transition.y += 0.2f;
+		mid[2].transition.y += 0.2f;*/
+		/*small[0].transition.y += 0.2f;
+		small[1].transition.y += 0.2f;
+		small[2].transition.y += 0.2f;*/
+		
+		break;
+
+	case 'a':
+		big.transition.x -= 0.2f;
+		/*mid[0].transition.x -= 0.2f;
+		mid[1].transition.x -= 0.2f;
+		mid[2].transition.x -= 0.2f;*/
+		/*small[0].transition.x -= 0.2f;
+		small[1].transition.x -= 0.2f;
+		small[2].transition.x -= 0.2f;*/
+		break;
+
+	case 's':
+		big.transition.y -= 0.2f;
+		/*mid[0].transition.y -= 0.2f;
+		mid[1].transition.y -= 0.2f;
+		mid[2].transition.y -= 0.2f;*/
+		/*small[0].transition.y -= 0.2f;
+		small[1].transition.y -= 0.2f;
+		small[2].transition.y -= 0.2f;*/
+		break;
+
+	case 'd':
+		big.transition.x += 0.2f;
+		/*mid[0].transition.x += 0.2f;
+		mid[1].transition.x += 0.2f;
+		mid[2].transition.x += 0.2f;*/
+		/*small[0].transition.x += 0.2f;
+		small[1].transition.x += 0.2f;
+		small[2].transition.x += 0.2f;*/
+		break;
+	case '+':
+		big.transition.z += 0.2f;
+		/*mid[0].transition.z += 0.2f;
+		mid[1].transition.z += 0.2f;
+		mid[2].transition.z += 0.2f;*/
+		break;
+
+	case'-':
+		big.transition.z -= 0.2f;
+		/*mid[0].transition.z -= 0.2f;
+		mid[1].transition.z -= 0.2f;
+		mid[2].transition.z -= 0.2f;*/
+		break;
+
+	case'z':
+		isSpinZ = !isSpinZ;
+		break;
+
 	case 'p': // 직각투영?
 		proj = glm::mat4(1.0f);
-		proj = glm::ortho(-2.0f, 2.0f, -2.0f, 2.0f, -2.0f, 2.0f);
+		proj = glm::ortho(-5.0f, 5.0f, -5.0f, 5.0f, -5.0f, 5.0f);
 		break;
 
 	case 'P': // 원근투영?
@@ -129,9 +253,6 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 		proj = glm::translate(proj, glm::vec3(0.0, 0.0, -5.0));
 		break;
 
-	case 'R': // reset
-		Reset();
-		break;
 
 	case 'q': // 프로그램 종료
 		exit(0);
@@ -142,15 +263,34 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 
 GLvoid TimerFunction(int value)
 {
+	//rotZ += 1.0f;
+
 	big.update();
 	mid[0].update();
 	mid[1].update();
 	mid[2].update();
 
+	small[0].update();
+	small[1].update();
+	small[2].update();
+
 	big.setmatrix();
-	mid[0].setmatrix(big.rotation, big.transition, big.scale);
+
+	/*mid[0].setmatrix(big.rotation, big.transition, big.scale);
 	mid[1].setmatrix(big.rotation, big.transition, big.scale);
-	mid[2].setmatrix(big.rotation, big.transition, big.scale);
+	mid[2].setmatrix(big.rotation, big.transition, big.scale);*/
+
+	mid[0].setmatrix(big.matrix);
+	mid[1].setmatrix(big.matrix);
+	mid[2].setmatrix(big.matrix);
+
+	/*small[0].setmatrix(mid[0].rotation, mid[0].transition, mid[0].scale, big.rotation, big.transition, big.scale, mid[0].orbit);
+	small[1].setmatrix(mid[1].rotation, mid[1].transition, mid[1].scale, big.rotation, big.transition, big.scale,mid[1].orbit);
+	small[2].setmatrix(mid[2].rotation, mid[2].transition, mid[2].scale, big.rotation, big.transition, big.scale,mid[2].orbit);*/
+
+	small[0].setmatrix(mid[0].matrix);
+	small[1].setmatrix(mid[1].matrix);
+	small[2].setmatrix(mid[2].matrix);
 
 	glutPostRedisplay();
 	glutTimerFunc(100, TimerFunction, 1);
