@@ -6,6 +6,7 @@ class object
 	vector<glm::vec3> c; // 색 정보
 	vector<unsigned int> i; // 인덱스 정보
 	GLUquadric* o;
+	glm::vec3 color{};
 
 	float radius = 1.0f;
 	float bigspin = 0.0f;
@@ -16,14 +17,14 @@ public:
 	bool isSpinY = false;
 	bool isSpinZ = false;
 	bool isSpinPlus = false;
-	glm::mat4 matrix = glm::mat4(1.0f); // 이동 행렬 > 필요할까?
+	glm::mat4 matrix = glm::mat4(1.0f); // 이동 행렬 > 필요할까
 
 	glm::vec3 rotation{ 0.0f,0.0f,0.0f }; // 회전 
 	glm::vec3 transition{ 0.0f,0.0f,0.0f }; // 이동
 	glm::vec3 scale{ 1.0f,1.0f,1.0f }; // 크기
 
 	object(const char*);
-	object(float, glm::vec3, glm::vec3, float);
+	object(float, glm::vec3, glm::vec3, float, glm::vec3);
 
 	void setmatrix(glm::vec3 r, glm::vec3 t, glm::vec3 s, glm::vec3 r2, glm::vec3 t2, glm::vec3 s2, float orbit);
 	void setmatrix(glm::mat4 p);

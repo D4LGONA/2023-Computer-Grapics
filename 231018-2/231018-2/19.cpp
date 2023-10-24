@@ -20,7 +20,7 @@ void InitBuffer();
 char* filetobuf(const char*);
 
 POINT mousept;
-object big = { 0.5f, {0.0f, 0.0f, 0.0f}, {0.0f,0.0f,0.0f}, 0.0f };
+object big = { 0.5f, {0.0f, 0.0f, 0.0f}, {0.0f,0.0f,0.0f}, 0.0f, {uidC(dre), uidC(dre), uidC(dre)} };
 vector<object> mid;
 vector<object> small;
 bool isSpinY = false;
@@ -45,13 +45,15 @@ void Reset()
 {
 	makecircle();
 
-	mid.push_back({ 0.3f, {0.5f, 0.0f, 0.0f} , {0.0f, 0.0f, 0.0f} , 4.0f });
-	mid.push_back({ 0.3f, {0.5f, 0.0f, 0.0f} , {0.0f, 0.0f, 45.0f}, 4.0f });
-	mid.push_back({ 0.3f, {0.5f, 0.0f, 0.0f} , {0.0f, 0.0f, -45.0f} , 4.0f});
+	big = { 0.5f, {0.0f, 0.0f, 0.0f}, {0.0f,0.0f,0.0f}, 0.0f, {uidC(dre), uidC(dre), uidC(dre)} };
 
-	small.push_back({ 0.1f, {0.3f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f} , 10.0f});
-	small.push_back({ 0.1f, {0.3f, 0.0f, 0.0f}, {0.0f, 0.0f, -45.0f}, 8.0f });
-	small.push_back({ 0.1f, {0.3f, 0.0f, 0.0f}, {0.0f, 0.0f, +45.0f}, 11.0f });
+	mid.push_back({ 0.3f, {0.5f, 0.0f, 0.0f} , {0.0f, 0.0f, 0.0f} , 2.0f, {uidC(dre), uidC(dre), uidC(dre)} });
+	mid.push_back({ 0.3f, {0.5f, 0.0f, 0.0f} , {0.0f, 0.0f, 45.0f}, 1.0f, {uidC(dre), uidC(dre), uidC(dre)} });
+	mid.push_back({ 0.3f, {0.5f, 0.0f, 0.0f} , {0.0f, 0.0f, -45.0f} , 4.0f, {uidC(dre), uidC(dre), uidC(dre)} });
+
+	small.push_back({ 0.1f, {0.3f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f} , 10.0f, {uidC(dre), uidC(dre), uidC(dre)} });
+	small.push_back({ 0.1f, {0.3f, 0.0f, 0.0f}, {0.0f, 0.0f, -0.0f}, 8.0f , {uidC(dre), uidC(dre), uidC(dre)} });
+	small.push_back({ 0.1f, {0.3f, 0.0f, 0.0f}, {0.0f, 0.0f, +0.0f}, 11.0f , {uidC(dre), uidC(dre), uidC(dre)} });
 
 	proj = glm::mat4(1.0f);
 	proj = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 50.0f); //--- 투영 공간 설정: fovy, aspect, near, far
@@ -88,8 +90,9 @@ GLvoid drawScene()
 	glUseProgram(shaderProgramID);
 	glBindVertexArray(vao);
 	
-
+	
 	glEnable(GL_DEPTH_TEST); 
+	glEnable(GL_COLOR_MATERIAL);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * pts.size(), pts.data(), GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
@@ -108,6 +111,7 @@ GLvoid drawScene()
 	unsigned int modelLocation = glGetUniformLocation(shaderProgramID, "transform");
 	unsigned int viewLocation = glGetUniformLocation(shaderProgramID, "view");
 	unsigned int projLocation = glGetUniformLocation(shaderProgramID, "projection");
+	unsigned int cLocation = glGetUniformLocation(shaderProgramID, "color");
 
 	glEnableVertexAttribArray(PosLocation); // Enable 필수! 사용하겠단 의미
 	glEnableVertexAttribArray(ColorLocation);
@@ -120,30 +124,47 @@ GLvoid drawScene()
 	
 	for (int i = 0; i < 6; ++i)
 	{
+		
 		if (i < 3)
 		{
 			glm::mat4 m = glm::mat4(1.0f);
 
 			m = glm::translate(m, big.transition);
 			m = glm::rotate(m, glm::radians(rotZ), {0.0f, 0.0f, 1.0f});
+			m = glm::rotate(m, glm::radians(rotY), {0.0f, 1.0f, 0.0f});
 			m = glm::rotate(m, glm::radians(mid[i].orbit), { 0.0f, 0.0f, 1.0f });
 			m = glm::translate(m, -big.transition);
 
 			m = glm::translate(m, big.transition);
-			/*m = glm::rotate(m, mid[i].rotation.z, {0.0f, 0.0f, 1.0f });
-			m = glm::rotate(m, mid[i].rotation.y, {0.0f, 1.0f, 0.0f });
-			m = glm::rotate(m, mid[i].rotation.x, {1.0f, 0.0f, 0.0f });*/
 
 			glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(m));
 			glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &view[0][0]);
 			glUniformMatrix4fv(projLocation, 1, GL_FALSE, &proj[0][0]);
+			glUniform3f(cLocation, 0.0f, 0.0f, 0.0f);
 			glDrawArrays(GL_LINE_LOOP, i * 360, 360);
 		}
 		else
 		{
-			glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(small[i-3].matrix));
+			glm::mat4 m = glm::mat4(1.0f);
+
+			/*m = glm::translate(m, big.transition);
+			m = glm::rotate(m, glm::radians(mid[i - 3].orbit), { 0.0f, 0.0f, 1.0f });
+			m = glm::translate(m, -big.transition)*/
+
+			m = glm::translate(m, { mid[i - 3].matrix[3][0], mid[i - 3].matrix[3][1], mid[i - 3].matrix[3][2] });
+			m = glm::rotate(m, glm::radians(rotY), {0.0f, 1.0f, 0.0f});
+			m = glm::rotate(m, glm::radians(rotZ), { 0.0f, 0.0f, 1.0f });
+			//m = glm::rotate(m, glm::radians(mid[i - 3].orbit), { 0.0f, 0.0f, 1.0f });
+			m = glm::translate(m, { -mid[i - 3].matrix[3][0], -mid[i - 3].matrix[3][1], -mid[i - 3].matrix[3][2] });
+
+			//m = glm::rotate(m, glm::radians(rotZ), { 0.0f, 0.0f, 1.0f });
+			m = glm::translate(m, { mid[i - 3].matrix[3][0], mid[i - 3].matrix[3][1], mid[i - 3].matrix[3][2] });
+			m = glm::scale(m, {0.6f, 0.6f, 0.6f });
+
+			glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(m));
 			glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &view[0][0]);
 			glUniformMatrix4fv(projLocation, 1, GL_FALSE, &proj[0][0]);
+			glUniform3f(cLocation, 0.0f, 0.0f, 0.0f);
 			glDrawArrays(GL_LINE_LOOP, i * 360, 360);
 		}
 
@@ -172,16 +193,45 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 {
 	switch (key)
 	{
+	case 'm':
+		isWire = !isWire;
+		break;
+
 	case 'y':
 		isSpinY = !isSpinY;
 		big.isSpinPlus = true;
 		big.isSpinY = isSpinY;
+		//big.isSpinPlus = true;
+		mid[0].isSpinY = isSpinY;
+		mid[1].isSpinY = isSpinY;
+		mid[2].isSpinY = isSpinY;
+		small[0].isSpinY = isSpinY;
+		small[1].isSpinY = isSpinY;
+		small[2].isSpinY = isSpinY;
+		mid[0].  isSpinPlus = true;
+		mid[1].  isSpinPlus = true;
+		mid[2].  isSpinPlus = true;
+		small[0].isSpinPlus = true;
+		small[1].isSpinPlus = true;
+		small[2].isSpinPlus = true;
 		break;
 
 	case 'Y':
 		isSpinY = !isSpinY;
 		big.isSpinPlus = false;
 		big.isSpinY = isSpinY;
+		mid[0].isSpinY = isSpinY;
+		mid[1].isSpinY = isSpinY;
+		mid[2].isSpinY = isSpinY;
+		small[0].isSpinY = isSpinY;
+		small[1].isSpinY = isSpinY;
+		small[2].isSpinY = isSpinY;
+		mid[0].isSpinPlus =   false;
+		mid[1].isSpinPlus =   false;
+		mid[2].isSpinPlus =   false;
+		small[0].isSpinPlus = false;
+		small[1].isSpinPlus = false;
+		small[2].isSpinPlus = false;
 		break;
 
 	case 'w':
@@ -240,6 +290,7 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 
 	case'z':
 		isSpinZ = !isSpinZ;
+		big.isSpinZ = isSpinZ;
 		break;
 
 	case 'p': // 직각투영?
@@ -263,7 +314,11 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 
 GLvoid TimerFunction(int value)
 {
-	//rotZ += 1.0f;
+	if(isSpinZ)
+		rotZ += 1.0f;
+
+	if (isSpinY)
+		rotY += 5.0f;
 
 	big.update();
 	mid[0].update();

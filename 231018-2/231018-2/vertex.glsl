@@ -9,9 +9,10 @@ out vec3 out_Color; //--- 프래그먼트 세이더에게 전달
 uniform mat4 transform;
 uniform mat4 view;
 uniform mat4 projection;
+uniform vec3 color;
 
 void main(void) 
 {
 	gl_Position = projection * view * transform * vec4(in_Position, 1.0f);
-	out_Color = in_Color;
+	out_Color = color;
 }

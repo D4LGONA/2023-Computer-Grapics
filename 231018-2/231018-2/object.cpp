@@ -18,12 +18,18 @@ void object::update()
 	bigspin += tbigspin;
 
 	if (isSpinZ)
-		rotation.z += 5.0f;
+		rotation.z -= 1.0f;
 	
 }
 
 void object::render(GLuint vbo[], GLuint ebo, GLuint shaderProgramID)
 {
+	if (isWire)
+		gluQuadricDrawStyle(o, GLU_LINE);
+	else
+		gluQuadricDrawStyle(o, GLU_FILL);
+
+
 	glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 2.0f); //--- 카메라 위치
 	glm::vec3 cameraDirection = glm::vec3(0.0f, 0.0f, 0.0f); //--- 카메라 바라보는 방향
 	glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f); //--- 카메라 위쪽 방향
@@ -36,6 +42,7 @@ void object::render(GLuint vbo[], GLuint ebo, GLuint shaderProgramID)
 	unsigned int modelLocation = glGetUniformLocation(shaderProgramID, "transform");
 	unsigned int viewLocation = glGetUniformLocation(shaderProgramID, "view");
 	unsigned int projLocation = glGetUniformLocation(shaderProgramID, "projection");
+	unsigned int cLocation = glGetUniformLocation(shaderProgramID, "color");
 
 	glEnableVertexAttribArray(PosLocation); // Enable 필수! 사용하겠단 의미
 	glEnableVertexAttribArray(ColorLocation);
@@ -48,14 +55,14 @@ void object::render(GLuint vbo[], GLuint ebo, GLuint shaderProgramID)
 	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(matrix));
 	glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &view[0][0]);
 	glUniformMatrix4fv(projLocation, 1, GL_FALSE, &proj[0][0]);
-	glColor3f(1.0f, 1.0f, 1.0f);
+	glUniform3f(cLocation, color.r, color.g, color.b);
 	gluSphere(o, radius, 20, 20);
 
 	glDisableVertexAttribArray(PosLocation); // Disable 필수!
 	glDisableVertexAttribArray(ColorLocation);
 }
 
-object::object(float r, glm::vec3 t, glm::vec3 R, float speed) : radius{ r }, transition{ t }, tbigspin{speed}
+object::object(float r, glm::vec3 t, glm::vec3 R, float speed, glm::vec3 color) : radius{ r }, transition{ t }, tbigspin{speed}, color{color}
 {
 	rotation = { R.x, R.y, -R.z };
 	orbit = R.z;
@@ -90,6 +97,7 @@ void object::setmatrix(glm::mat4 p)
 
 	matrix = glm::translate(matrix, {p[3][0], p[3][1], p[3][2]});
 	matrix = glm::rotate(matrix, glm::radians(rotZ), { 0.0f,0.0f,1.0f });
+	matrix = glm::rotate(matrix, glm::radians(rotY), { 0.0f,1.0f,0.0f});
 	matrix = glm::rotate(matrix, glm::radians(orbit), { 0.0f,0.0f,1.0f });
 	matrix = glm::rotate(matrix, glm::radians(bigspin), { 0.0f,1.0f,0.0f });
 	matrix = glm::translate(matrix, {-p[3][0], -p[3][1], -p[3][2]});
