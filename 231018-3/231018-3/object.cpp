@@ -1,22 +1,22 @@
 #include "stdafx.h"
 #include "object.h"
 
-object::object(const char* c)
+object::object(const char* c, glm::vec3 s = { 1.0f, 1.0f, 1.0f }, glm::vec3 r = { 0.0f, 0.0f, 0.0f }, glm::vec3 t = {0.0f, 0.0f, 0.0f})
+	: scale{s}, rotation{r}, transition{t}
 {
 	readobj(c);
 }
 
 void object::update()
 {
-	
+	updateMatrix();
 }
 
-void object::render(GLuint vbo[], GLuint ebo, GLuint shaderProgramID)
+void object::render(GLuint shaderProgramID)
 {
-	glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 2.0f); //--- 카메라 위치
-	glm::vec3 cameraDirection = glm::vec3(0.0f, 0.0f, 0.0f); //--- 카메라 바라보는 방향
-	glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f); //--- 카메라 위쪽 방향
-	glm::mat4 view = glm::mat4(1.0f);
+	glBindVertexArray(vao);
+
+	
 	view = glm::lookAt(cameraPos, cameraDirection, cameraUp);
 
 	// Location 번호 저장
@@ -39,6 +39,9 @@ void object::render(GLuint vbo[], GLuint ebo, GLuint shaderProgramID)
 	glUniformMatrix4fv(projLocation, 1, GL_FALSE, &proj[0][0]);
 
 	// 여기서 그리기
+
+	glDrawElements(GL_TRIANGLES, i.size(), GL_UNSIGNED_INT, 0);
+
 	
 	glDisableVertexAttribArray(PosLocation); // Disable 필수!
 	glDisableVertexAttribArray(ColorLocation);
@@ -125,18 +128,42 @@ void object::readobj(const char* s)
 		i.push_back(face[j].z);
 	}
 
-
+	InitBuffer();
+	updateMatrix();
 
 	fclose(path);
 }
 
-void object::bind(GLuint vbo[], GLuint ebo)
+void object::updateMatrix()
 {
+	matrix = glm::mat4(1.0f);
+
+	matrix = glm::translate(matrix, transition);
+	matrix = glm::rotate(matrix, glm::radians(rotation.x), {1.0f, 0.0f, 0.0f});
+	matrix = glm::rotate(matrix, glm::radians(rotation.y), {0.0f, 1.0f, 0.0f});
+	matrix = glm::rotate(matrix, glm::radians(rotation.z), {0.0f, 0.0f, 1.0f});
+	matrix = glm::scale(matrix, scale);
+}
+
+void object::InitBuffer()
+{
+	glGenVertexArrays(1, &vao); // VAO를 생성하고 할당합니다.
+	glBindVertexArray(vao); // VAO를 바인드합니다.
+	glGenBuffers(2, vbo); // 2개의 VBO를 생성하고 할당합니다.
+
+	glGenBuffers(1, &ebo);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * i.size(), i.data(), GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * v.size(), v.data(), GL_DYNAMIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * c.size(), c.data(), GL_DYNAMIC_DRAW);
-}
 
+	// 정점 좌표 데이터를 VAO에 바인딩하고 활성화합니다.
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(0);
+
+	// 색상 데이터를 VAO에 바인딩하고 활성화합니다.
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(1);
+}

@@ -16,15 +16,26 @@ GLvoid Keyboard(unsigned char key, int x, int y);
 GLvoid TimerFunction(int value);
 GLvoid Mouse(int button, int state, int x, int y);
 GLvoid Motion(int x, int y);
-void InitBuffer();
+//void InitBuffer();
 char* filetobuf(const char*);
 
 POINT mousept;
 vector<object> o;
+bool iskeydown = false;
 
+object bg{};
 void Reset() // 필요한 객체 -> 
 {
-	o.push_back("cube.obj");
+	bg = { "cube.obj", glm::vec3{ 5.0f, 0.1f, 5.0f }, glm::vec3{0.0f, 0.0f, 0.0f}, glm::vec3{0.0f, 0.0f, 0.0f} };
+
+	o.push_back({ "cube.obj", glm::vec3{ 1.0f, 1.0f, 1.0f }, glm::vec3{0.0f, 0.0f, 0.0f}, glm::vec3{0.0f, 0.0f, 0.0f} });
+	o.push_back({ "cube.obj", glm::vec3{ 0.5f, 0.5f, 0.5f }, glm::vec3{0.0f, 0.0f, 0.0f}, glm::vec3{0.0f, 1.0f, 0.0f} });
+
+	o.push_back({ "cube.obj", glm::vec3{ 0.1f, 0.1f, 1.0f }, glm::vec3{0.0f, 0.0f, 0.0f}, glm::vec3{0.5f, 0.25f, 0.5f} });
+	o.push_back({ "cube.obj", glm::vec3{ 0.1f, 0.1f, 1.0f }, glm::vec3{0.0f, 0.0f, 0.0f}, glm::vec3{-0.5f, 0.25f, 0.5f} });
+
+	o.push_back({ "cube.obj", glm::vec3{ 0.1f, 1.0f, 0.1f }, glm::vec3{0.0f, 0.0f, 0.0f}, glm::vec3{0.25f, 1.0f, 0.0f} });
+	o.push_back({ "cube.obj", glm::vec3{ 0.1f, 1.0f, 0.1f }, glm::vec3{0.0f, 0.0f, 0.0f}, glm::vec3{-0.25f, 1.0f, 0.0f} });
 
 	proj = glm::mat4(1.0f);
 	proj = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 50.0f); //--- 투영 공간 설정: fovy, aspect, near, far
@@ -43,7 +54,6 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	glewExperimental = GL_TRUE;
 	glewInit();
 	make_shaderProgram();
-	InitBuffer();
 	glutDisplayFunc(drawScene);
 	glutReshapeFunc(Reshape);
 	glutMouseFunc(Mouse);
@@ -59,14 +69,14 @@ GLvoid drawScene()
 	glClearColor(1.0f, 1.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glUseProgram(shaderProgramID);
-	glBindVertexArray(vao);
 	
 	glEnable(GL_DEPTH_TEST); 
 	
+	bg.render(shaderProgramID);
 	for (object& i : o)
 	{
 		
-		i.render(vbo, ebo, shaderProgramID);
+		i.render(shaderProgramID);
 	}
 	
 
@@ -82,6 +92,10 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 {
 	switch (key)
 	{
+	case 'm':
+		for (object& i : o)
+			i.move(0);
+		break;
 
 	case 'p': // 직각투영?
 		proj = glm::mat4(1.0f);
@@ -104,6 +118,13 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 
 GLvoid TimerFunction(int value)
 {
+	
+	
+	
+
+	for (object& i : o)
+		i.update();
+	bg.update();
 
 	glutPostRedisplay();
 	glutTimerFunc(100, TimerFunction, 1);
@@ -125,35 +146,6 @@ GLvoid Motion(int x, int y)
 {
 
 	glutPostRedisplay();
-}
-
-void InitBuffer()
-{
-	glGenVertexArrays(1, &vao); // VAO를 생성하고 할당합니다.
-	glBindVertexArray(vao); // VAO를 바인드합니다.
-	glGenBuffers(2, vbo); // 2개의 VBO를 생성하고 할당합니다.
-
-	glGenBuffers(1, &ebo);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int), cubeIdx.data(), GL_STATIC_DRAW);
-
-	// 첫 번째 VBO에 정점 좌표 데이터를 설정합니다.
-	//glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-	//glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * lines.size(), lines.data(), GL_STATIC_DRAW);
-
-	//// 두 번째 VBO에 색상 데이터를 설정합니다.
-	//glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
-	//glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * lineColor.size(), lineColor.data(), GL_STATIC_DRAW);
-
-	// 정점 좌표 데이터를 VAO에 바인딩하고 활성화합니다.
-	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(0);
-
-	// 색상 데이터를 VAO에 바인딩하고 활성화합니다.
-	glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(1);
 }
 
 void make_shaderProgram()
