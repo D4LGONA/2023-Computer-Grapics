@@ -21,18 +21,50 @@ char* filetobuf(const char*);
 
 POINT mousept;
 vector<object> o;
-bool iskeydown = false;
+vector<glm::vec3> pts;
+vector<glm::vec3> pts2;
+int cnt = 0;
+pair<bool, bool> b = {false, false};
+pair<bool, bool> m = {false, false};
+pair<bool, bool> f = {false, false};
+pair<bool, bool> e = {false, false};
+pair<bool, bool> t = {false, false};
+pair<bool, bool> y_ = {false, false};
+pair<bool, bool> r = {false, false};
+pair<bool, bool> a = {false, false};
+
+glm::vec3 origin = { 0.0f, 0.0f, 0.0f };
 
 object bg{};
+
+void setRoute(glm::vec3 dest)
+{
+	pts.clear();
+	float r = dist({ cameraPos.x, 0.0f, cameraPos.z }, { dest.x, 0.0f, dest.z });
+	for (int i = 0; i < 360; ++i)
+		pts.push_back({ r * cos(glm::radians(float(i))) + dest.x, cameraPos.y, r * sin(glm::radians(float(i))) + dest.z });
+	cameraDirection = dest;
+}
+
+void setView(glm::vec3 dest)
+{
+	pts2.clear();
+	float r = dist({ cameraPos.x, 0.0f, cameraPos.z }, { dest.x, 0.0f, dest.z });
+	for (int i = 0; i < 360; ++i)
+		pts2.push_back({ r * cos(glm::radians(float(i))) + cameraPos.x, dest.y, r * sin(glm::radians(float(i))) + cameraPos.z });
+}
+
 void Reset() // 필요한 객체 -> 
 {
-	bg = { "cube.obj", glm::vec3{ 5.0f, 0.1f, 5.0f }, glm::vec3{0.0f, 0.0f, 0.0f}, glm::vec3{0.0f, 0.0f, 0.0f} };
+	bg = { "cube.obj", glm::vec3{ 10.0f, 0.1f, 10.0f }, glm::vec3{0.0f, 0.0f, 0.0f}, glm::vec3{0.0f, 0.0f, 0.0f} };
 
-	o.push_back({ "cube.obj", glm::vec3{ 1.0f, 1.0f, 1.0f }, glm::vec3{0.0f, 0.0f, 0.0f}, glm::vec3{0.0f, 0.0f, 0.0f} });
-	o.push_back({ "cube.obj", glm::vec3{ 0.5f, 0.5f, 0.5f }, glm::vec3{0.0f, 0.0f, 0.0f}, glm::vec3{0.0f, 1.0f, 0.0f} });
+	o.push_back({ "cube.obj", glm::vec3{ 1.0f, 0.5f, 1.0f }, glm::vec3{0.0f, 0.0f, 0.0f}, glm::vec3{0.0f, 0.5f, 0.0f} });
 
 	o.push_back({ "cube.obj", glm::vec3{ 0.1f, 0.1f, 1.0f }, glm::vec3{0.0f, 0.0f, 0.0f}, glm::vec3{0.5f, 0.25f, 0.5f} });
 	o.push_back({ "cube.obj", glm::vec3{ 0.1f, 0.1f, 1.0f }, glm::vec3{0.0f, 0.0f, 0.0f}, glm::vec3{-0.5f, 0.25f, 0.5f} });
+
+	o.push_back({ "cube.obj", glm::vec3{ 0.5f, 0.5f, 0.5f }, glm::vec3{0.0f, 0.0f, 0.0f}, glm::vec3{0.0f, 1.0f, 0.0f} });
+
 
 	o.push_back({ "cube.obj", glm::vec3{ 0.1f, 1.0f, 0.1f }, glm::vec3{0.0f, 0.0f, 0.0f}, glm::vec3{0.25f, 1.0f, 0.0f} });
 	o.push_back({ "cube.obj", glm::vec3{ 0.1f, 1.0f, 0.1f }, glm::vec3{0.0f, 0.0f, 0.0f}, glm::vec3{-0.25f, 1.0f, 0.0f} });
@@ -75,10 +107,11 @@ GLvoid drawScene()
 	bg.render(shaderProgramID);
 	for (object& i : o)
 	{
-		
 		i.render(shaderProgramID);
 	}
-	
+	//o[1].render(shaderProgramID);
+	//o[2].render(shaderProgramID);
+
 
 	glutSwapBuffers(); //--- 화면에 출력하기
 }
@@ -92,14 +125,94 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 {
 	switch (key)
 	{
+	case 'b':
+		b.first = !b.first;
+		b.second = true;
+		break;
+		
+	case 'B':
+		b.first = !b.first;
+		b.second = false;
+		break;
+
 	case 'm':
-		for (object& i : o)
-			i.move(0);
+		m.first = !m.first;
+		m.second = true;
+		break;
+
+	case 'M':
+		m.first = !m.first;
+		m.second = false;
+		break;
+
+	case 'f':
+		f.first = !f.first;
+		f.second = true;
+		break;
+
+	case 'F':
+		f.first = !f.first;
+		f.second = false;
+		break;
+
+	case 'e':
+		e.first = !e.first;
+		e.second = true;
+		break;
+
+	case 'E':
+		e.first = !e.first;
+		e.second = false;
+		break;
+
+	case 't':
+		t.first = !t.first;
+		t.second = true;
+		break;
+
+	case 'T':
+		t.first = !t.first;
+		t.second = false;
+		break;
+
+	case 'z':
+		cameraPos.z += 1.0f;
+		cameraDirection.z += 1.0f;
+		break;
+
+	case 'Z':
+		cameraPos.z -= 1.0f;
+		cameraDirection.z -= 1.0f;
+		break;
+
+	case 'x':
+		cameraPos.x += 1.0f;
+		cameraDirection.x += 1.0f;
+		break;
+
+	case 'X':
+		cameraPos.x -= 1.0f;
+		cameraDirection.x -= 1.0f;
+		break;
+
+	case 'y':
+		y_.first = !y_.first;
+		cnt = 0;
+		break;
+
+	case 'r':
+		r.first = !r.first;
+		cnt = 0;
+		break;
+
+	case 'a':
+		a.first = !a.first;
+		cnt = 0;
 		break;
 
 	case 'p': // 직각투영?
 		proj = glm::mat4(1.0f);
-		proj = glm::ortho(-5.0f, 5.0f, -5.0f, 5.0f, -5.0f, 5.0f);
+		proj = glm::ortho(-20.0f, 20.0f, -20.0f, 20.0f, -20.0f, 20.0f);
 		break;
 
 	case 'P': // 원근투영?
@@ -118,13 +231,117 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 
 GLvoid TimerFunction(int value)
 {
+
+	if (b.first)
+	{
+		if (o[0].transition.x < 10.0f && o[0].transition.x > -10.0f)
+			o[0].move(0, b.second);
+	}
+
+	origin = o[0].GETORIGIN();
+	for (int i = 1; i < o.size(); ++i)
+		o[i].Origin = o[0].GETORIGIN();
 	
-	
-	
+	if (m.first)
+	{
+		for (int i = 3; i < o.size(); ++i)
+			o[i].rotbyorigin(1, m.second, origin);
+	}
+	else
+	{
+		for (int i = 3; i < o.size(); ++i)
+			o[i].rotPoint = origin;
+	}
+
+	if (f.first)
+	{
+		if (o[1].GETROTORIGIN().y > 180.0f || o[1].GETROTORIGIN().y < 0.0f)
+			f.second = !f.second;
+
+		o[1].rotbyorigin(1, f.second, { origin.x + 0.5f, origin.y + 0.25f, origin.z  });
+		o[2].rotbyorigin(1, !f.second, { origin.x - 0.5f, origin.y + 0.25f, origin.z });
+	}
+	else
+	{
+		if (o[1].GETROTORIGIN().y - 0.0f > FLT_EPSILON)
+		{
+			o[1].rotbyorigin(1, !f.second, origin);
+			o[2].rotbyorigin(1, f.second, origin);
+		}
+	}
+
+	if (e.first)
+	{
+		if (o[1].GETROTORIGIN().y - 0.0f < FLT_EPSILON)
+		{
+			if (o[1].transition.x > 0.5f || o[1].transition.x <= 0.0f)
+				e.second = !e.second;
+
+			o[1].move(0, e.second);
+			o[2].move(0, !e.second);
+		}
+	}
+	else
+	{
+		if (0.5f - o[1].transition.x > FLT_EPSILON)
+		{
+			o[1].move(0, e.second);
+			o[2].move(0, !e.second);
+		}
+	}
 
 	for (object& i : o)
 		i.update();
 	bg.update();
+
+	if (t.first)
+	{
+		if (o[4].GETROTORIGIN().x > 10.0f || o[4].GETROTORIGIN().x < -10.0f)
+			t.second = !t.second;
+		o[4].rotbyorigin(0, t.second, { o[4].rotPoint.x, o[4].rotPoint.y + 0.5f, o[4].rotPoint.z });
+		o[5].rotbyorigin(0, !t.second, { o[5].rotPoint.x, o[5].rotPoint.y + 0.5f, o[5].rotPoint.z });
+	}
+	else
+	{
+		if (abs(o[4].GETROTORIGIN().x - 0.0f) > FLT_EPSILON)
+		{
+			if (t.second)
+			{
+				o[4].rotbyorigin(0, t.second, { o[4].rotPoint.x, o[4].rotPoint.y + 0.5f, o[4].rotPoint.z });
+				o[5].rotbyorigin(0, !t.second, { o[5].rotPoint.x, o[5].rotPoint.y + 0.5f, o[5].rotPoint.z });
+			}
+			else
+			{
+				o[4].rotbyorigin(0, !t.second, { o[4].rotPoint.x, o[4].rotPoint.y + 0.5f, o[4].rotPoint.z });
+				o[5].rotbyorigin(0, t.second, { o[5].rotPoint.x, o[5].rotPoint.y + 0.5f, o[5].rotPoint.z });
+			}
+		}
+	}
+	
+	if (y_.first)
+	{
+		setView({ 0.0f, 0.0f, 0.0f });
+		cnt = (cnt + 5) % int(pts2.size());
+		cameraDirection = pts2[cnt];
+	}
+
+	if (r.first)
+	{
+		if (b.first && b.second)
+			cameraPos.x += 1.0f;
+		if (b.first && !b.second)
+			cameraPos.x -= 1.0f;
+		setRoute(origin);
+		cnt = (cnt + 5) % int(pts.size());
+		cameraPos = pts[cnt];
+	}
+
+	if (a.first)
+	{
+		setRoute({ 0.0f, 0.0f, 0.0f });
+		cnt = (cnt + 5) % int(pts.size());
+		cameraPos = pts[cnt];
+	}
 
 	glutPostRedisplay();
 	glutTimerFunc(100, TimerFunction, 1);

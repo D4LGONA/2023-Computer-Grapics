@@ -138,11 +138,28 @@ void object::updateMatrix()
 {
 	matrix = glm::mat4(1.0f);
 
-	matrix = glm::translate(matrix, transition);
+	matrix = glm::translate(matrix, rotPoint);
+	matrix = glm::rotate(matrix, glm::radians(rotOrigin.z), { 0.0f, 0.0f, 1.0f });
+	matrix = glm::rotate(matrix, glm::radians(rotOrigin.y), { 0.0f, 1.0f, 0.0f });
+	matrix = glm::rotate(matrix, glm::radians(rotOrigin.x), { 1.0f, 0.0f, 0.0f });
+	matrix = glm::translate(matrix, -rotPoint);
+
+
+
+	//matrix = glm::translate(matrix, transition);
+	//matrix = glm::translate(matrix, -transition);
+	matrix = glm::translate(matrix, transition + Origin);
 	matrix = glm::rotate(matrix, glm::radians(rotation.x), {1.0f, 0.0f, 0.0f});
 	matrix = glm::rotate(matrix, glm::radians(rotation.y), {0.0f, 1.0f, 0.0f});
 	matrix = glm::rotate(matrix, glm::radians(rotation.z), {0.0f, 0.0f, 1.0f});
 	matrix = glm::scale(matrix, scale);
+}
+
+void object::rotbyorigin(int n, bool b, glm::vec3 o)
+{
+	rotPoint = o;
+	if (b) rotOrigin[n] += 5.0f;
+	else rotOrigin[n] -= 5.0f;
 }
 
 void object::InitBuffer()

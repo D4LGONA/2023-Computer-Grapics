@@ -86,10 +86,10 @@ void object::update()
 			}
 			else
 			{
-				if (isOpen[i].second < 90.0f)
+				if (isOpen[i].second < 115.0f)
 					isOpen[i].second += 5.0f;
 				else
-					isOpen[i].second = 90.0f;
+					isOpen[i].second = 115.0f;
 			}
 		}
 			
