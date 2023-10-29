@@ -32,10 +32,13 @@ pair<bool, bool> t = {false, false};
 pair<bool, bool> y_ = {false, false};
 pair<bool, bool> r = {false, false};
 pair<bool, bool> a = {false, false};
+bool viewport = true;
 
 glm::vec3 origin = { 0.0f, 0.0f, 0.0f };
 
 object bg{};
+glm::vec3 tmppos = cameraPos;
+
 
 void setRoute(glm::vec3 dest)
 {
@@ -103,14 +106,52 @@ GLvoid drawScene()
 	glUseProgram(shaderProgramID);
 	
 	glEnable(GL_DEPTH_TEST); 
-	
-	bg.render(shaderProgramID);
-	for (object& i : o)
+	if (viewport)
 	{
-		i.render(shaderProgramID);
+		proj = glm::mat4(1.0f);
+		proj = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 50.0f); //--- 투영 공간 설정: fovy, aspect, near, far
+		proj = glm::translate(proj, glm::vec3(0.0, 0.0, -5.0));
+		glViewport(0, 0, 400, 800);
+		bg.render(shaderProgramID);
+		for (object& i : o)
+		{
+			i.render(shaderProgramID);
+		}
+
+		
+		proj = glm::mat4(1.0f);
+		proj = glm::ortho(-20.0f, 20.0f, -20.0f, 20.0f, -20.0f, 20.0f);
+		cameraPos = { 0.0f, 5.0f, 0.0f };
+		cameraDirection = { 0.0f,0.0f,0.1f };
+		glViewport(400, 0, 400, 400);
+		bg.render(shaderProgramID);
+		for (object& i : o)
+		{
+			i.render(shaderProgramID);
+		}
+
+		proj = glm::mat4(1.0f);
+		proj = glm::ortho(-20.0f, 20.0f, -20.0f, 20.0f, -20.0f, 20.0f);
+		cameraPos = { 0.0f, 0.0f, 5.0f };
+		cameraDirection = { 0.0f,0.0f,0.0f };
+		glViewport(400, 400, 400, 400);
+		bg.render(shaderProgramID);
+		for (object& i : o)
+		{
+			i.render(shaderProgramID);
+		}
+
+		cameraPos = tmppos;
 	}
-	//o[1].render(shaderProgramID);
-	//o[2].render(shaderProgramID);
+	else
+	{
+		glViewport(0, 0, 800, 800);
+		bg.render(shaderProgramID);
+		for (object& i : o)
+		{
+			i.render(shaderProgramID);
+		}
+	}
 
 
 	glutSwapBuffers(); //--- 화면에 출력하기
