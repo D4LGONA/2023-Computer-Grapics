@@ -33,6 +33,8 @@ int walk_speed = 1;
 
 bool isjump = false;
 bool jump_up = true;
+float up_speed = 2.0f;
+
 
 int opencount = 0;
 
@@ -107,8 +109,8 @@ void Reset()
 		box.push_back({ "cube.obj", {2.0f, 2.0f, 2.0f}, {0.0f, 0.0f, 0.0f}, {uidp(dre), -18.0f, uidp(dre)} });
 
 	proj = glm::mat4(1.0f);
-	proj = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 50.0f); //--- 투영 공간 설정: fovy, aspect, near, far
-	proj = glm::translate(proj, glm::vec3(0.0, 0.0, -10.0f));
+	proj = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 200.0f); //--- 투영 공간 설정: fovy, aspect, near, far
+	proj = glm::translate(proj, glm::vec3(0.0, 0.0, 20.0f));
 }
 
 void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
@@ -164,8 +166,11 @@ GLvoid Keyboarddown(unsigned char key, int x, int y)
 	switch (key)
 	{
 	case 'j':
-		if(!isjump)
+		if (!isjump)
+		{
 			isjump = true;
+			up_speed = 2.0f;
+		}
 		break;
 
 	case'o':
@@ -271,6 +276,19 @@ GLvoid Keyboardup(unsigned char key, int x, int y)
 
 GLvoid TimerFunction(int value)
 {
+	if (isjump)
+	{
+		//if()
+		origin.y += up_speed;
+		up_speed -= 0.3f;
+		
+		if (abs(origin.y) <= FLT_EPSILON || origin.y < 0.0f)
+		{
+			origin.y = 0.0f;
+			isjump = false;
+		}
+	}
+
 	if (opencount != 0 && opencount != 20)
 		open();
 
@@ -290,7 +308,16 @@ GLvoid TimerFunction(int value)
 		{
 			for (object& i : o)
 				i.rotOrigin.y = 0.0f;
-			origin.z -= 0.5f * walk_speed;
+			origin.z += 0.5f * walk_speed;
+		}
+		
+		for (object& i : box)
+		{
+			if (aabb(i, o[0]) || aabb(i, o[1]))
+			{
+				origin.z += 0.5f * walk_speed;
+				break;
+			}
 		}
 	}
 	if (moves[1])
@@ -305,12 +332,30 @@ GLvoid TimerFunction(int value)
 				i.rotOrigin.y = 90.0f;
 			origin.x += 0.5f * walk_speed;
 		}
+
+		for (object& i : box)
+		{
+			if (aabb(i, o[0]) || aabb(i, o[1]))
+			{
+				origin.x += 0.5f * walk_speed;
+				break;
+			}
+		}
 	}
 	if (moves[2])
 	{
 		for (object& i : o)
 			i.rotOrigin.y = 0.0f;
 		origin.z += 0.5f * walk_speed;
+
+		for (object& i : box)
+		{
+			if (aabb(i, o[0]) || aabb(i, o[1]))
+			{
+				origin.z -= 0.5f * walk_speed;
+				break;
+			}
+		}
 	}
 	if (moves[3])
 	{
@@ -322,6 +367,15 @@ GLvoid TimerFunction(int value)
 			for (object& i : o)
 				i.rotOrigin.y = 270.0f;
 			origin.x -= 0.5f * walk_speed;
+		}
+
+		for (object& i : box)
+		{
+			if (aabb(i, o[0]) || aabb(i, o[1]))
+			{
+				origin.x -= 0.5f * walk_speed;
+				break;
+			}
 		}
 	}
 	
