@@ -5,6 +5,8 @@ GLchar* vertexSource, * fragmentSource; //--- 소스코드 저장 변수
 GLuint vertexShader, fragmentShader; //--- 세이더 객체
 GLuint shaderProgramID; //--- 셰이더 프로그램
 
+uniform_real_distribution<float> uidp{-20.0f, 20.0f};
+
 void make_shaderProgram();
 void make_vertexShaders();
 void make_fragmentShaders();
@@ -20,15 +22,56 @@ char* filetobuf(const char*);
 POINT mousept;
 vector<object> stage;
 vector<object> o;
+vector<object> box;
 
 bool moves[4] = { false, false, false, false }; // w(z++)a(x++)s(z--)d(x--)
 bool C_rotY = false;
+int walk_count = 0;
+bool count_up = true;
+float walk_angle = 5.0f;
+int walk_speed = 1;
+
+bool isjump = false;
+bool jump_up = true;
+
+int opencount = 0;
 
 glm::vec3 origin = { 0.0f, 0.0f, 0.0f };
 
 void cameraRot(int n)
 {
 	cameraAngle[n] += 5.0f;
+}
+
+void walk()
+{
+	if (walk_count == 5 || walk_count == -5)
+		count_up = !count_up;
+
+	o[0].rotPoint.y -= 14.0f;
+	o[0].rotOrigin.x = walk_angle * walk_count;
+	o[1].rotPoint.y -= 14.0f;
+	o[1].rotOrigin.x = -1 * walk_angle * walk_count;
+
+	o[4].rotPoint.y -= 8.0f;
+	o[4].rotOrigin.x = -1 * walk_angle * walk_count;
+	o[5].rotPoint.y -= 8.0f;
+	o[5].rotOrigin.x = walk_angle * walk_count;
+
+	if (count_up)
+		walk_count++;
+	else
+		walk_count--;
+}
+
+void open()
+{
+	if(opencount < 20)
+	{
+		stage[5].transition.x += 1.0f;
+		stage[6].transition.x -= 1.0f;
+		opencount++;
+	}
 }
 
 void Reset()
@@ -40,7 +83,8 @@ void Reset()
 	stage.push_back({ "plane.obj", {20.0f, 1.0f, 20.0f}, {0.0f,0.0f,90.0f}, {20.0f,0.0f,0.0f} });
 	stage.push_back({ "plane.obj", {20.0f, 1.0f, 20.0f}, {0.0f,0.0f,90.0f}, {-20.0f,0.0f,0.0f} });
 	stage.push_back({ "plane.obj", {20.0f, 1.0f, 20.0f}, {90.0f,0.0f,0.0f}, {0.0f,0.0f,-20.0f} });
-	//stage.push_back({ "plane.obj", {20.0f, 1.0f, 20.0f}, {90.0f,0.0f,0.0f}, {0.0f,20.0f,20.0f} });
+	stage.push_back({ "plane.obj", {10.0f, 1.0f, 20.0f}, {90.0f,0.0f,0.0f}, {10.0f,0.0f,20.0f} });
+	stage.push_back({ "plane.obj", {10.0f, 1.0f, 20.0f}, {90.0f,0.0f,0.0f}, {-10.0f,0.0f,20.0f} });
 
 	// 다리
 	o.push_back({ "cube.obj", {1.0f, 3.0f, 1.0f}, {0.0f,0.0f,0.0f}, {-1.0f, -17.0f, 0.0f} });
@@ -55,6 +99,12 @@ void Reset()
 	// 팔
 	o.push_back({ "cube.obj", {1.0f, 3.0f, 1.0f}, {0.0f,0.0f,0.0f}, {-3.0f, -11.0f, 0.0f} });
 	o.push_back({ "cube.obj", {1.0f, 3.0f, 1.0f}, {0.0f,0.0f,0.0f}, {3.0f, -11.0f, 0.0f} });
+
+	// nose
+	o.push_back({ "cube.obj", {0.1f,0.1f,1.0f}, {0.0f,0.0f,0.0f}, {0.0f, -7.0f, 1.0f} });
+
+	for(int i = 0; i < 3; ++i)
+		box.push_back({ "cube.obj", {2.0f, 2.0f, 2.0f}, {0.0f, 0.0f, 0.0f}, {uidp(dre), -18.0f, uidp(dre)} });
 
 	proj = glm::mat4(1.0f);
 	proj = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 50.0f); //--- 투영 공간 설정: fovy, aspect, near, far
@@ -95,6 +145,9 @@ GLvoid drawScene()
 	for (object& i : stage)
 		i.render(shaderProgramID);
 
+	for (object& i : box)
+		i.render(shaderProgramID);
+
 	for (object& i : o)
 		i.render(shaderProgramID);
 
@@ -110,6 +163,15 @@ GLvoid Keyboarddown(unsigned char key, int x, int y)
 {
 	switch (key)
 	{
+	case 'j':
+		if(!isjump)
+			isjump = true;
+		break;
+
+	case'o':
+		open();
+		break;
+
 	case 'w':
 		moves[0] = true;
 		break;
@@ -125,7 +187,6 @@ GLvoid Keyboarddown(unsigned char key, int x, int y)
 	case 'd':
 		moves[3] = true;
 		break;
-
 
 	case 'x':
 		cameraPos.x += 0.5f;
@@ -151,6 +212,22 @@ GLvoid Keyboarddown(unsigned char key, int x, int y)
 		cameraDirection.z -= 0.5f;
 		break;
 
+	case '+':
+		if (walk_speed < 10)
+		{
+			walk_angle += 1.0f;
+			walk_speed++;
+		}
+		break;
+
+	case '-':
+		if (walk_speed > 1)
+		{
+			walk_angle -= 1.0f;
+			walk_speed--;
+		}
+		break;
+
 	case 'p': // 직각투영?
 		proj = glm::mat4(1.0f);
 		proj = glm::ortho(-50.0f, 50.0f, -50.0f, 50.0f, -50.0f, 50.0f);
@@ -161,7 +238,6 @@ GLvoid Keyboarddown(unsigned char key, int x, int y)
 		proj = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 50.0f); //--- 투영 공간 설정: fovy, aspect, near, far
 		proj = glm::translate(proj, glm::vec3(0.0, 0.0, -10.0f));
 		break;
-
 
 	case 'q': // 프로그램 종료
 		exit(0);
@@ -195,18 +271,71 @@ GLvoid Keyboardup(unsigned char key, int x, int y)
 
 GLvoid TimerFunction(int value)
 {
-	if (moves[0])
-		origin.z += 1.0f;
-	if (moves[1])
-		origin.x += 1.0f;
-	if (moves[2])
-		origin.z -= 1.0f;
-	if (moves[3])
-		origin.x -= 1.0f;
-	
+	if (opencount != 0 && opencount != 20)
+		open();
 
 	for (object& i : o)
+	{
 		i.Origin = origin;
+		i.rotPoint = origin;
+	}
+
+	if (moves[0])
+	{
+		for (object& i : o)
+			i.rotOrigin.y = 180.0f;
+		origin.z -= 0.5f * walk_speed;
+
+		if (origin.z <= -19.0f)
+		{
+			for (object& i : o)
+				i.rotOrigin.y = 0.0f;
+			origin.z -= 0.5f * walk_speed;
+		}
+	}
+	if (moves[1])
+	{
+		for (object& i : o)
+			i.rotOrigin.y = 270.0f;
+		origin.x -= 0.5f * walk_speed;
+
+		if (origin.x <= -19.0f)
+		{
+			for (object& i : o)
+				i.rotOrigin.y = 90.0f;
+			origin.x += 0.5f * walk_speed;
+		}
+	}
+	if (moves[2])
+	{
+		for (object& i : o)
+			i.rotOrigin.y = 0.0f;
+		origin.z += 0.5f * walk_speed;
+	}
+	if (moves[3])
+	{
+		for (object& i : o)
+			i.rotOrigin.y = 90.0f;
+		origin.x += 0.5f * walk_speed;
+		if (origin.x >= 19.0f)
+		{
+			for (object& i : o)
+				i.rotOrigin.y = 270.0f;
+			origin.x -= 0.5f * walk_speed;
+		}
+	}
+	
+	if (moves[0] || moves[1] || moves[2] || moves[3])
+		walk();
+	else
+	{
+		walk_count = 0;
+		o[0].rotOrigin.x = 0.0f;
+		o[1].rotOrigin.x = 0.0f;
+
+		o[4].rotOrigin.x = 0.0f;
+		o[5].rotOrigin.x = 0.0f;
+	}
 
 	for (object& i : o)
 		i.update();
@@ -229,13 +358,11 @@ GLvoid Mouse(int button, int state, int x, int y)
 	else if (button == GLUT_LEFT_BUTTON && state == GLUT_UP)
 	{
 	}
-
 	return GLvoid();
 }
 
 GLvoid Motion(int x, int y)
 {
-
 	glutPostRedisplay();
 }
 

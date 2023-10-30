@@ -32,3 +32,4 @@ extern glm::vec3 cameraAngle;
 pair<float, float> WintoOpenGL(POINT pt);
 float dist(POINT p1, POINT p2);
 float dist(glm::vec3 p1, glm::vec3 p2);
+bool aabb(class object& a, class object& b);
