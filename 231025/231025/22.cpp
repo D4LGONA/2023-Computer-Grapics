@@ -132,7 +132,7 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	glutKeyboardFunc(Keyboarddown);
 	glutKeyboardUpFunc(Keyboardup);
 	Reset();
-	glutTimerFunc(100, TimerFunction, 1);
+	glutTimerFunc(50, TimerFunction, 1);
 	glutMainLoop();
 }
 
@@ -240,7 +240,7 @@ GLvoid Keyboarddown(unsigned char key, int x, int y)
 
 	case 'P': // 원근투영?
 		proj = glm::mat4(1.0f);
-		proj = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 50.0f); //--- 투영 공간 설정: fovy, aspect, near, far
+		proj = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 200.0f); //--- 투영 공간 설정: fovy, aspect, near, far
 		proj = glm::translate(proj, glm::vec3(0.0, 0.0, -10.0f));
 		break;
 
@@ -276,17 +276,28 @@ GLvoid Keyboardup(unsigned char key, int x, int y)
 
 GLvoid TimerFunction(int value)
 {
-	if (isjump)
+	// 아니면 항상 떨어지게 하고 있기
+	// 충돌하면 충돌한 위치로 보내기
+	origin.y += up_speed;
+	up_speed -= 0.3f;
+
+	// 박스에 닿았을때
+	for (object& i : box)
 	{
-		//if()
-		origin.y += up_speed;
-		up_speed -= 0.3f;
-		
-		if (abs(origin.y) <= FLT_EPSILON || origin.y < 0.0f)
+		if ((origin.y < 4.0f && origin.y >= FLT_EPSILON) && (aabb(i, o[0]) || aabb(i, o[1])))
 		{
-			origin.y = 0.0f;
+			cout << origin.y << endl;
+			origin.y = 4.0f;
+			up_speed = 0.0f;
 			isjump = false;
+			break;
 		}
+	}
+
+	if (origin.y < 0.0f)
+	{
+		origin.y = 0.0f;
+		isjump = false;
 	}
 
 	if (opencount != 0 && opencount != 20)
@@ -313,9 +324,9 @@ GLvoid TimerFunction(int value)
 		
 		for (object& i : box)
 		{
-			if (aabb(i, o[0]) || aabb(i, o[1]))
+			if (origin.y < FLT_EPSILON && (aabb(i, o[0]) || aabb(i, o[1])))
 			{
-				origin.z += 0.5f * walk_speed;
+				origin.z = i.transition.z + i.scale.z + (o[0].scale.z * 2);
 				break;
 			}
 		}
@@ -335,9 +346,9 @@ GLvoid TimerFunction(int value)
 
 		for (object& i : box)
 		{
-			if (aabb(i, o[0]) || aabb(i, o[1]))
+			if (origin.y < FLT_EPSILON && (aabb(i, o[0]) || aabb(i, o[1])))
 			{
-				origin.x += 0.5f * walk_speed;
+				origin.x = i.transition.x + i.scale.x + (o[0].scale.x * 2);
 				break;
 			}
 		}
@@ -350,9 +361,9 @@ GLvoid TimerFunction(int value)
 
 		for (object& i : box)
 		{
-			if (aabb(i, o[0]) || aabb(i, o[1]))
+			if (origin.y < FLT_EPSILON && (aabb(i, o[0]) || aabb(i, o[1])))
 			{
-				origin.z -= 0.5f * walk_speed;
+				origin.z = i.transition.z - i.scale.z - (o[0].scale.z * 2);
 				break;
 			}
 		}
@@ -371,9 +382,9 @@ GLvoid TimerFunction(int value)
 
 		for (object& i : box)
 		{
-			if (aabb(i, o[0]) || aabb(i, o[1]))
+			if (origin.y < FLT_EPSILON && (aabb(i, o[0]) || aabb(i, o[1])))
 			{
-				origin.x -= 0.5f * walk_speed;
+				origin.x = i.transition.x - i.scale.x - (o[0].scale.x * 2 + 0.1f);
 				break;
 			}
 		}
@@ -401,7 +412,7 @@ GLvoid TimerFunction(int value)
 		cameraRot(1);
 
 	glutPostRedisplay();
-	glutTimerFunc(100, TimerFunction, 1);
+	glutTimerFunc(50, TimerFunction, 1);
 }
 
 GLvoid Mouse(int button, int state, int x, int y)
