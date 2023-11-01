@@ -42,7 +42,7 @@ glm::vec3 origin = { 0.0f, 0.0f, 0.0f };
 
 void cameraRot(int n)
 {
-	cameraAngle[n] += 5.0f;
+	cameraAngle[n] += 1.0f;
 }
 
 void walk()
@@ -79,6 +79,31 @@ void open()
 void Reset()
 {
 	origin = { 0.0f, 0.0f, 0.0f };
+
+	stage.clear();
+	o.clear();
+	box.clear();
+
+	for (int i = 0; i < 4; ++i)
+		moves[i] = false;
+
+	C_rotY = false;
+	walk_count = 0;
+	count_up = true;
+	walk_angle = 5.0f;
+	walk_speed = 1;
+
+	isjump = false;
+	jump_up = true;
+	up_speed = 2.0f;
+
+	opencount = 0;
+
+	cameraPos = glm::vec3(0.0f, 0.0f, 50.0f); //--- 카메라 위치
+	cameraDirection = glm::vec3(0.0f, 0.0f, 0.0f); //--- 카메라 바라보는 방향
+	cameraUp = glm::vec3(0.0f, 1.0f, 0.0f); //--- 카메라 위쪽 방향
+	view = glm::mat4(1.0f);
+	cameraAngle = { 0.0f, 0.0f, 0.0f };
 
 	stage.push_back({ "plane.obj", {20.0f, 1.0f, 20.0f}, {0.0f,0.0f,0.0f}, {0.0f,-20.0f,0.0f} });
 	stage.push_back({ "plane.obj", {20.0f, 1.0f, 20.0f}, {0.0f,0.0f,0.0f}, {0.0f,20.0f,0.0f} });
@@ -294,11 +319,13 @@ GLvoid TimerFunction(int value)
 		}
 	}
 
-	if (origin.y < 0.0f)
+	if (origin.y < 0.0f && origin.z <= 20.0f)
 	{
+		up_speed = 0.0f;
 		origin.y = 0.0f;
 		isjump = false;
 	}
+
 
 	if (opencount != 0 && opencount != 20)
 		open();
@@ -348,7 +375,7 @@ GLvoid TimerFunction(int value)
 		{
 			if (origin.y < FLT_EPSILON && (aabb(i, o[0]) || aabb(i, o[1])))
 			{
-				origin.x = i.transition.x + i.scale.x + (o[0].scale.x * 2);
+				origin.x = i.transition.x + i.scale.x + ((o[0].scale.x + 0.1f) * 2);
 				break;
 			}
 		}
@@ -384,7 +411,7 @@ GLvoid TimerFunction(int value)
 		{
 			if (origin.y < FLT_EPSILON && (aabb(i, o[0]) || aabb(i, o[1])))
 			{
-				origin.x = i.transition.x - i.scale.x - (o[0].scale.x * 2 + 0.1f);
+				origin.x = i.transition.x - i.scale.x - ((o[0].scale.x + 0.1f) * 2);
 				break;
 			}
 		}

@@ -40,25 +40,45 @@ object bg{};
 glm::vec3 tmppos = cameraPos;
 
 
-void setRoute(glm::vec3 dest)
-{
-	pts.clear();
-	float r = dist({ cameraPos.x, 0.0f, cameraPos.z }, { dest.x, 0.0f, dest.z });
-	for (int i = 0; i < 360; ++i)
-		pts.push_back({ r * cos(glm::radians(float(i))) + dest.x, cameraPos.y, r * sin(glm::radians(float(i))) + dest.z });
-	cameraDirection = dest;
-}
-
-void setView(glm::vec3 dest)
-{
-	pts2.clear();
-	float r = dist({ cameraPos.x, 0.0f, cameraPos.z }, { dest.x, 0.0f, dest.z });
-	for (int i = 0; i < 360; ++i)
-		pts2.push_back({ r * cos(glm::radians(float(i))) + cameraPos.x, dest.y, r * sin(glm::radians(float(i))) + cameraPos.z });
-}
+//void setRoute(glm::vec3 dest)
+//{
+//	pts.clear();
+//	float r = dist({ cameraPos.x, 0.0f, cameraPos.z }, { dest.x, 0.0f, dest.z });
+//	for (int i = 0; i < 360; ++i)
+//		pts.push_back({ r * cos(glm::radians(float(i))) + dest.x, cameraPos.y, r * sin(glm::radians(float(i))) + dest.z });
+//	cameraDirection = dest;
+//}
+//
+//void setView(glm::vec3 dest)
+//{
+//	pts2.clear();
+//	float r = dist({ cameraPos.x, 0.0f, cameraPos.z }, { dest.x, 0.0f, dest.z });
+//	for (int i = 0; i < 360; ++i)
+//		pts2.push_back({ r * cos(glm::radians(float(i))) + cameraPos.x, dest.y, r * sin(glm::radians(float(i))) + cameraPos.z });
+//}
 
 void Reset() // 필요한 객체 -> 
 {
+	o.clear();
+
+	b = { false, false };
+	m = { false, false };
+	f = { false, false };
+	e = { false, false };
+	t = { false, false };
+	y_ = { false, false };
+	r = { false, false };
+	a = { false, false };
+	bool viewport = false;
+	glm::vec3 origin = { 0.0f, 0.0f, 0.0f };
+
+	proj = glm::mat4(1.0f);
+	cameraPos = glm::vec3(0.0f, 1.0f, 5.0f); //--- 카메라 위치
+	cameraDirection = glm::vec3(0.0f, 0.0f, 0.0f); //--- 카메라 바라보는 방
+	cameraUp = glm::vec3(0.0f, 1.0f, 0.0f); //--- 카메라 위쪽 방향
+	view = glm::mat4(1.0f);
+	cameraAngle = glm::vec3(0.0f, 0.0f, 0.0f);
+
 	bg = { "cube.obj", glm::vec3{ 10.0f, 0.1f, 10.0f }, glm::vec3{0.0f, 0.0f, 0.0f}, glm::vec3{0.0f, 0.0f, 0.0f} };
 
 	o.push_back({ "cube.obj", glm::vec3{ 1.0f, 0.5f, 1.0f }, glm::vec3{0.0f, 0.0f, 0.0f}, glm::vec3{0.0f, 0.5f, 0.0f} });
@@ -101,7 +121,7 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 
 GLvoid drawScene()
 {
-	glClearColor(1.0f, 1.0f, 0.0f, 1.0f);
+	glClearColor(0.0f, 1.0f, 1.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glUseProgram(shaderProgramID);
 	
@@ -166,6 +186,25 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 {
 	switch (key)
 	{
+	case 'c':
+		
+		cout << "b/B : x축 방향으로 양/음 방향 이동" << endl;
+		cout << "m/M : y축 방향으로 양/음 방향 이동" << endl;
+		cout << "f/F : 포신이 y축에 대하여 양/음 방향으로 회전하는데, 두 포신이 서로 반대방향으로 회전한다. 다시 누르면 멈춘다." << endl;
+		cout << "e/E : 2개 포신이 조금씩 이동해서 한 개가 된다/다시 제자리로 이동해서 2개가 된다." << endl;
+		cout << "t/T : 크레인의 맨 위 2개의 팔이 z축에 대하여 양/음 방향으로 서로 반대방향으로 회전한다. 다시 누르면 멈춘다." << endl;
+		cout << "z/Z: 카메라가 z축 양/음 방향으로 이동" << endl;
+		cout << "x/X: 카메라가 x축 양/음 방향으로 이동" << endl;
+		cout << "y/Y: 카메라 기준 y축에 대하여 회전" << endl;
+		cout << "r/R: 화면의 중심의 y축에 대하여 카메라가 회전 (중점에 대하여 공전)" << endl;
+		cout << "a/A: r 명령어와 같이 화면의 중심의 축에 대하여 카메라가 회전하는 애니메이션을 진행한다/멈춘다." << endl;
+		cout << "s/S: 모든 움직임 멈추기" << endl;
+		cout << "c/C: 모든 움직임이 초기화된다." << endl;
+		cout << "Q: 프로그램 종료하기" << endl;
+
+		break;
+
+
 	case 'b':
 		b.first = !b.first;
 		b.second = true;
@@ -249,6 +288,21 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 	case 'a':
 		a.first = !a.first;
 		cnt = 0;
+		break;
+
+	case 'i':
+		Reset();
+		break;
+
+	case 'k':
+		b = { false, false };
+		m = { false, false };
+		f = { false, false };
+		e = { false, false };
+		t = { false, false };
+		y_ = { false, false };
+		r = { false, false };
+		a = { false, false };
 		break;
 
 	case 'p': // 직각투영?
@@ -361,27 +415,42 @@ GLvoid TimerFunction(int value)
 	
 	if (y_.first)
 	{
-		setView({ 0.0f, 0.0f, 0.0f });
+		for (object& i : o)
+			i.cy = true;
+
+		/*cameraPos.x = 0.0f;
+		cameraPos.z = 0.0f;*/
+		cameraAngle.y += 5.0f;
+		/*setView({ 0.0f, 0.0f, 0.0f });
 		cnt = (cnt + 5) % int(pts2.size());
-		cameraDirection = pts2[cnt];
+		cameraDirection = pts2[cnt];*/
 	}
 
 	if (r.first)
 	{
-		if (b.first && b.second)
+		for (object& i : o)
+			i.cy = false;
+		cameraAngle.y += 5.0f;
+		cameraDirection = origin;
+		
+		/*if (b.first && b.second)
 			cameraPos.x += 1.0f;
 		if (b.first && !b.second)
 			cameraPos.x -= 1.0f;
 		setRoute(origin);
 		cnt = (cnt + 5) % int(pts.size());
-		cameraPos = pts[cnt];
+		cameraPos = pts[cnt];*/
 	}
 
 	if (a.first)
 	{
-		setRoute({ 0.0f, 0.0f, 0.0f });
+		for (object& i : o)
+			i.cy = false;
+		cameraAngle.y += 5.0f;
+		cameraDirection = { 0.0f,0.0f,0.0f };
+		/*setRoute({ 0.0f, 0.0f, 0.0f });
 		cnt = (cnt + 5) % int(pts.size());
-		cameraPos = pts[cnt];
+		cameraPos = pts[cnt];*/
 	}
 
 	glutPostRedisplay();

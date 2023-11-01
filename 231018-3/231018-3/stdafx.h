@@ -27,6 +27,7 @@ extern glm::vec3 cameraPos;
 extern glm::vec3 cameraDirection;
 extern glm::vec3 cameraUp;
 extern glm::mat4 view;
+extern glm::vec3 cameraAngle;
 
 pair<float, float> WintoOpenGL(POINT pt);
 float dist(POINT p1, POINT p2);

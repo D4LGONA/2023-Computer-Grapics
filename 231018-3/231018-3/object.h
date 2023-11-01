@@ -17,7 +17,7 @@ class object
 
 	object* parent = nullptr;
 public:
-
+	bool cy = false;
 	glm::mat4 matrix = glm::mat4(1.0f); // 전체 행렬 녀석
 	glm::vec3 Origin{};
 	glm::vec3 rotPoint{ 0.0f, 0.0f, 0.0f };

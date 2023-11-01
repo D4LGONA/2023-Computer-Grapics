@@ -16,8 +16,26 @@ void object::render(GLuint shaderProgramID)
 {
 	glBindVertexArray(vao);
 
+	if (cy)
+	{
+		
+		view = glm::lookAt(cameraPos, cameraDirection, cameraUp);
+		view = glm::translate(view, cameraPos);
+		view = glm::rotate(view, glm::radians(cameraAngle.x), { 1.0f, 0.0f, 0.0f });
+		view = glm::rotate(view, glm::radians(cameraAngle.y), { 0.0f, 1.0f, 0.0f });
+		view = glm::rotate(view, glm::radians(cameraAngle.z), { 0.0f, 0.0f, 1.0f });
+		view = glm::translate(view, -cameraPos);
+	}
+	else
+	{
+		view = glm::lookAt(cameraPos, cameraDirection, cameraUp);
+		view = glm::translate(view, +cameraDirection);
+		view = glm::rotate(view, glm::radians(cameraAngle.x), { 1.0f, 0.0f, 0.0f });
+		view = glm::rotate(view, glm::radians(cameraAngle.y), { 0.0f, 1.0f, 0.0f });
+		view = glm::rotate(view, glm::radians(cameraAngle.z), { 0.0f, 0.0f, 1.0f });
+		view = glm::translate(view, -cameraDirection);
+	}
 	
-	view = glm::lookAt(cameraPos, cameraDirection, cameraUp);
 
 	// Location 번호 저장
 	unsigned int PosLocation = glGetAttribLocation(shaderProgramID, "in_Position"); //	: 0  Shader의 'layout (location = 0)' 부분

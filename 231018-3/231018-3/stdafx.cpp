@@ -8,6 +8,7 @@ glm::vec3 cameraPos = glm::vec3(0.0f, 1.0f, 5.0f); //--- 카메라 위치
 glm::vec3 cameraDirection = glm::vec3(0.0f, 0.0f, 0.0f); //--- 카메라 바라보는 방향
 glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f); //--- 카메라 위쪽 방향
 glm::mat4 view = glm::mat4(1.0f);
+glm::vec3 cameraAngle = glm::vec3(0.0f, 0.0f, 0.0f);
 
 pair<float, float> WintoOpenGL(POINT pt)
 {
