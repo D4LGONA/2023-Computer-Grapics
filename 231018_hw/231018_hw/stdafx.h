@@ -27,6 +27,7 @@ extern std::random_device rd;
 extern std::mt19937 dre;
 extern std::uniform_real_distribution<float> uidC;
 extern std::uniform_real_distribution<float> uidD;
+extern std::uniform_real_distribution<float> uidA;
 extern std::uniform_int_distribution<int> uidS;
 extern std::uniform_int_distribution<int> uidY;
 extern int score;

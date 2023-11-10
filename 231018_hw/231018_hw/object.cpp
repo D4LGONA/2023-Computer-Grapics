@@ -95,11 +95,24 @@ void object::remove()
 
 void object::move()
 {
+	POINT sum = {0,0};
+	for (int i = 0; i < pts.size(); ++i)
+		sum = { pts[i].x + sum.x, pts[i].y + sum.y};
+	sum = { sum.x / long(pts.size()), sum.y / long(pts.size()) };
+
 	// ÀÌµ¿
 	gravity += 1.0f;
 	for (int i = 0; i < pts.size(); ++i)
 	{
 		POINT tmp = pts[i];
+
+		tmp = { tmp.x - sum.x, tmp.y - sum.y };
+
+		tmp.x = tmp.x * cos(glm::radians(angle)) - tmp.y * sin(glm::radians(angle));
+		tmp.y = tmp.x * sin(glm::radians(angle)) + tmp.y * cos(glm::radians(angle));
+
+		tmp = { tmp.x + sum.x, tmp.y + sum.y };
+
 		tmp.x += 800, tmp.y += 800;
 		tmp.x += dir.x * 20;
 		tmp.y += dir.y * 20;
@@ -107,8 +120,6 @@ void object::move()
 		tmp.x -= 800, tmp.y -= 800;
 		pts[i] = tmp;
 	}
-
-
 }
 
 void object::move(glm::vec2 d)

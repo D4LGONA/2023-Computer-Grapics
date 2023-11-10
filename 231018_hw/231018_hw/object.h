@@ -10,12 +10,12 @@ class object
 	glm::vec2 dir;
 
 	float gravity = 0.5f;
-	float angle = 1.0f; // 새로 추가
+	float angle = uidA(dre); // 새로 추가
 
 public:
 	bool isput = false;
 	bool isSliced = false;
-	object(int sides, int size ); // 모양, 크기
+	object(int sides, int size); // 모양, 크기
 	object(vector<POINT> input, glm::vec2 d);
 
 	void sortVertex();
