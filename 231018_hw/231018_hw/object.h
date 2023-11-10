@@ -2,7 +2,7 @@
 
 class object
 {
-	// 들어가야 할 것 -> 정점 들...
+	vector<POINT> route;
 	vector<POINT> pts;
 	glm::vec3 color;
 	vector<glm::vec3> pt;
@@ -10,9 +10,11 @@ class object
 	glm::vec2 dir;
 
 	float gravity = 0.5f;
+	float angle = 1.0f; // 새로 추가
 
-	bool isput = false;
 public:
+	bool isput = false;
+	bool isSliced = false;
 	object(int sides, int size ); // 모양, 크기
 	object(vector<POINT> input, glm::vec2 d);
 
@@ -21,6 +23,7 @@ public:
 	void update();
 	void remove();
 	void move();
+	void move(glm::vec2 d);
 	pair<bool, pair<vector<POINT>, vector<POINT>>> isCross(POINT, POINT);
 	bool isRemove();
 	bool isIntersect(POINT, glm::vec2);

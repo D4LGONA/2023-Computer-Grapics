@@ -95,25 +95,28 @@ void object::remove()
 
 void object::move()
 {
-	if (isput)
+	// 이동
+	gravity += 1.0f;
+	for (int i = 0; i < pts.size(); ++i)
 	{
-		for (int i = 0; i < pts.size(); ++i)
-			pts[i].x += dir.x * 20;
+		POINT tmp = pts[i];
+		tmp.x += 800, tmp.y += 800;
+		tmp.x += dir.x * 20;
+		tmp.y += dir.y * 20;
+		tmp.y += gravity;
+		tmp.x -= 800, tmp.y -= 800;
+		pts[i] = tmp;
 	}
-	else
-	{
-		gravity += 1.0f; // 요기 값 잘 조절해서 어떻게 해볼 것
-		for (int i = 0; i < pts.size(); ++i)
-		{
-			POINT tmp = pts[i];
-			tmp.x += 800, tmp.y += 800;
-			tmp.x += dir.x * 20;
-			tmp.y += dir.y * 20;
-			tmp.y += gravity;
-			tmp.x -= 800, tmp.y -= 800;
-			pts[i] = tmp;
-		}
-	}
+
+
+}
+
+void object::move(glm::vec2 d)
+{
+	dir = d;
+
+	for (int i = 0; i < pts.size(); ++i)
+		pts[i].x += dir.x * 10;
 }
 
 pair<bool, pair<vector<POINT>, vector<POINT>>> object::isCross(POINT pt1, POINT pt2)
@@ -195,11 +198,13 @@ bool object::isIntersect(POINT pt, glm::vec2 d)
 	tmp.x /= pts.size();
 	tmp.y /= pts.size();
 
-	if (tmp.y > pt.y && (tmp.x < pt.x + 200 && tmp.x > pt.x))
+	if (tmp.y > pt.y && (tmp.x < pt.x + 200 && tmp.x > pt.x) && isSliced && !isput)
 	{
+		score++;
 		isput = true;
 		dir.x = d.x;
 		dir.y = 0.0f;
+		score++;
 		return true;
 	}
 	return false;

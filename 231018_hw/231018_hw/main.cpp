@@ -91,6 +91,7 @@ GLvoid drawScene()
 		glDrawArrays(GL_LINES, 0, 2);
 	}
 
+	
 
 	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * 4, basket, GL_DYNAMIC_DRAW);
@@ -147,16 +148,24 @@ GLvoid TimerFunction(int value)
 	}
 
 	for (object& i : v)
-		i.move();
+	{
+		if (i.isput)
+			i.move(basketDir);
+		else
+			i.move();
+
+	}
 
 	for (object& i : v)
 		i.update();
 	
+	// 바구니 위치 조정
 	for (int i = 0; i < 4; ++i)
 	{
-		basketPt[i].x += basketDir.x * 20;
+		basketPt[i].x += basketDir.x * 10;
 	}
 
+	// 바구니 충돌 체크
 	auto a = min_element(basketPt, basketPt + 4, [](const POINT& a, const POINT& b) {return a.x < b.x; });
 	auto b = max_element(basketPt, basketPt + 4, [](const POINT& a, const POINT& b) {return a.x < b.x; });
 	if (a->x <= 0)
@@ -198,6 +207,8 @@ GLvoid TimerFunction(int value)
 	}
 	
 
+	
+
 	glutPostRedisplay();
 	glutTimerFunc(50, TimerFunction, 1);
 }
@@ -234,12 +245,16 @@ GLvoid Mouse(int button, int state, int x, int y)
 				if (tmpdir.x < 0.0f)
 				{
 					v.push_back({ tmp.second.first, {tmpdir.x / 2.0f, tmpdir.y} });
+					v.back().isSliced = true;
 					v.push_back({ tmp.second.second, {tmpdir.x / -2.0f, tmpdir.y} });
+					v.back().isSliced = true;
 				}
 				else
 				{
 					v.push_back({ tmp.second.first, {tmpdir.x / -2.0f, tmpdir.y} });
+					v.back().isSliced = true;
 					v.push_back({ tmp.second.second, {tmpdir.x / 2.0f, tmpdir.y} });
+					v.back().isSliced = true;
 				}
 				
 				arr.push_back(count);
