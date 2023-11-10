@@ -22,7 +22,9 @@ char* filetobuf(const char*);
 int cnt = 0;
 bool isDrag = false;
 vector<object> v;
+vector<object> lines;
 
+int timertime = 50;
 POINT mousept;
 glm::vec3 dragLine[2];
 POINT linePt[2];
@@ -32,6 +34,51 @@ POINT basketPt[4] = { {400, 760}, {400, 800}, {600, 800}, {600, 760} };
 glm::vec3 basket[4];
 glm::vec3 basketColor[4] = { {1.0f, 1.0f, 0.0}, {1.0f, 1.0f, 0.0}, {1.0f, 1.0f, 0.0}, {1.0f, 1.0f, 0.0} };
 glm::vec2 basketDir = {1.0f, 0.0f};
+
+bool drawLine = true;
+
+void render()
+{
+	glBindVertexArray(vao);
+
+	glm::mat4 matrix = glm::mat4(1.0f);
+
+	// Location 번호 저장
+	unsigned int PosLocation = glGetAttribLocation(shaderProgramID, "in_Position"); //	: 0  Shader의 'layout (location = 0)' 부분
+	unsigned int ColorLocation = glGetAttribLocation(shaderProgramID, "in_Color"); //	: 1
+	unsigned int modelLocation = glGetUniformLocation(shaderProgramID, "transform");
+
+	glEnableVertexAttribArray(PosLocation); // Enable 필수! 사용하겠단 의미
+	glEnableVertexAttribArray(ColorLocation);
+
+	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]); // 정점 좌표용 VBO 바인딩
+	glVertexAttribPointer(PosLocation, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), 0);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo[1]); // 색상 데이터용 VBO 바인딩
+	glVertexAttribPointer(ColorLocation, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), 0);
+
+	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(matrix));
+
+	glLineWidth(2.0f);
+	if (isDrag)
+	{
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * 2, dragLine, GL_DYNAMIC_DRAW);
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * 2, lineColor, GL_DYNAMIC_DRAW);
+
+		glDrawArrays(GL_LINES, 0, 2);
+	}
+
+	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * 4, basket, GL_DYNAMIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * 4, basketColor, GL_DYNAMIC_DRAW);
+
+	glDrawArrays(GL_POLYGON, 0, 4);
+
+	glDisableVertexAttribArray(PosLocation); // Disable 필수!
+	glDisableVertexAttribArray(ColorLocation);
+}
 
 void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 {
@@ -52,7 +99,7 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	glutMotionFunc(Motion);
 	glutKeyboardFunc(Keyboard);
 
-	glutTimerFunc(50, TimerFunction, 1);
+	glutTimerFunc(timertime, TimerFunction, 1);
 
 	glutMainLoop();
 }
@@ -62,46 +109,17 @@ GLvoid drawScene()
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glUseProgram(shaderProgramID);
-	glBindVertexArray(vao);
 	
-	// Location 번호 저장
-	int PosLocation = glGetAttribLocation(shaderProgramID, "in_Position"); //	: 0  Shader의 'layout (location = 0)' 부분
-	int ColorLocation = glGetAttribLocation(shaderProgramID, "in_Color"); //	: 1
+	if(drawLine)
+		for (object& i : lines)
+			if(i.isrender)
+				i.render(shaderProgramID, true);
 
-	
-	glEnableVertexAttribArray(PosLocation); // Enable 필수! 사용하겠단 의미
-	glEnableVertexAttribArray(ColorLocation);
-
-	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]); // 정점 좌표용 VBO 바인딩
-	glVertexAttribPointer(PosLocation, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), 0);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo[1]); // 색상 데이터용 VBO 바인딩
-	glVertexAttribPointer(ColorLocation, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), 0);
-	
 	for (object& i : v)
-		i.render(vbo);
+		i.render(shaderProgramID, false);
 
-	if (isDrag)
-	{
-		glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * 2, dragLine, GL_DYNAMIC_DRAW);
-		glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * 2, lineColor, GL_DYNAMIC_DRAW);
+	render();
 
-		glLineWidth(3.0f);
-		glDrawArrays(GL_LINES, 0, 2);
-	}
-
-	
-
-	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * 4, basket, GL_DYNAMIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * 4, basketColor, GL_DYNAMIC_DRAW);
-
-	glDrawArrays(GL_POLYGON, 0, 4);
-
-	glDisableVertexAttribArray(PosLocation); // Disable 필수!
-	glDisableVertexAttribArray(ColorLocation);
 
 	glutSwapBuffers(); //--- 화면에 출력하기
 }
@@ -115,16 +133,26 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 {
 	switch (key)
 	{
-	case 'c':
-		v.push_back({5, 30 });
-		break;
-
 	case 'w':
 		isSolid = false;
 		break;
 
 	case 's':
 		isSolid = true;
+		break;
+
+	case 'l':
+		drawLine = !drawLine;
+		break;
+
+	case '+':
+		if(timertime > 0)
+			timertime--;
+		break;
+
+	case '-':
+		if (timertime < 100)
+			timertime++;
 		break;
 
 	case 'q': // 프로그램 종료
@@ -143,7 +171,8 @@ GLvoid TimerFunction(int value)
 
 	if (cnt >= 10)
 	{
-		v.push_back({ uidS(dre), 30 });
+		v.push_back({ uidS(dre), 30 /400. });
+		lines.push_back(v.back().getRoute());
 		cnt = 0;
 	}
 
@@ -198,19 +227,21 @@ GLvoid TimerFunction(int value)
 			i--;
 			v[i+1].remove();
 			v.erase(v.begin() + (i + 1));
+			lines.erase(lines.begin() + (i + 1));
 		}
 	}
 
-	for (object& i : v)
+	for (int i = 0; i < v.size(); ++i)
 	{
-		i.isIntersect(basketPt[0], basketDir);
+		if (v[i].isIntersect(basket[0], basketDir))
+			lines[i].isrender = false;
 	}
 	
 
 	
 
 	glutPostRedisplay();
-	glutTimerFunc(50, TimerFunction, 1);
+	glutTimerFunc(timertime, TimerFunction, 1);
 }
 
 GLvoid Mouse(int button, int state, int x, int y)
@@ -231,30 +262,28 @@ GLvoid Mouse(int button, int state, int x, int y)
 		int max = v.size();
 		for(int count = 0; count < max; ++count)
 		{
-			pair<bool, pair<vector<POINT>, vector<POINT>>> tmp = v[count].isCross(linePt[0], linePt[1]);
+			pair<bool, pair<vector<glm::vec3>, vector<glm::vec3>>> tmp = v[count].isCross(dragLine[0], dragLine[1]);
 			if (tmp.first)
 			{
-				// 좌표 확인 용
-				/*for (int j = 0; j < tmp.second.first.size(); ++j)
-					cout << tmp.second.first[j].x << ", " << tmp.second.first[j].y << endl;
-				for (int j = 0; j < tmp.second.second.size(); ++j)
-					cout << tmp.second.second[j].x << ", " << tmp.second.second[j].y << endl;*/
-
 				glm::vec2 tmpdir = v[count].GETDIR();
 
 				if (tmpdir.x < 0.0f)
 				{
-					v.push_back({ tmp.second.first, {tmpdir.x / 2.0f, tmpdir.y} });
+					v.push_back({ tmp.second.first, {tmpdir.x / 2.0f, tmpdir.y}, v[count].S, v[count].R, v[count].T});
 					v.back().isSliced = true;
-					v.push_back({ tmp.second.second, {tmpdir.x / -2.0f, tmpdir.y} });
+					lines.push_back({ v.back().getRoute()});
+					v.push_back({ tmp.second.second, {tmpdir.x / -2.0f, tmpdir.y} , v[count].S, v[count].R, v[count].T });
 					v.back().isSliced = true;
+					lines.push_back({ v.back().getRoute() });
 				}
 				else
 				{
-					v.push_back({ tmp.second.first, {tmpdir.x / -2.0f, tmpdir.y} });
+					v.push_back({ tmp.second.first, {tmpdir.x / -2.0f, tmpdir.y} , v[count].S, v[count].R, v[count].T });
 					v.back().isSliced = true;
-					v.push_back({ tmp.second.second, {tmpdir.x / 2.0f, tmpdir.y} });
+					lines.push_back({ v.back().getRoute() });
+					v.push_back({ tmp.second.second, {tmpdir.x / 2.0f, tmpdir.y} , v[count].S, v[count].R, v[count].T });
 					v.back().isSliced = true;
+					lines.push_back({ v.back().getRoute() });
 				}
 				
 				arr.push_back(count);
@@ -264,6 +293,7 @@ GLvoid Mouse(int button, int state, int x, int y)
 		for (int i = 0; i < arr.size(); ++i)
 		{
 			v.erase(v.begin() + (arr[i] - i));
+			lines.erase(lines.begin() + (arr[i] - i));
 		}
 	}
 	return GLvoid();

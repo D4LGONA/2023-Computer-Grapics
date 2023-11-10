@@ -28,11 +28,11 @@ extern std::mt19937 dre;
 extern std::uniform_real_distribution<float> uidC;
 extern std::uniform_real_distribution<float> uidD;
 extern std::uniform_real_distribution<float> uidA;
+extern std::uniform_real_distribution<float> uidY;
 extern std::uniform_int_distribution<int> uidS;
-extern std::uniform_int_distribution<int> uidY;
 extern int score;
 extern bool isSolid;
 
 pair<float, float> WintoOpenGL(POINT pt);
-float dist(POINT p1, POINT p2);
-int ccw(POINT , POINT , POINT );
+float dist(glm::vec3 p1, glm::vec3 p2);
+int ccw(glm::vec3, glm::vec3, glm::vec3);
