@@ -150,6 +150,18 @@ GLvoid TimerFunction(int value)
 	for (Object& i : rects)
 		i.Update();
 
+	for (Object& i : stage)
+	{
+		for (Object& j : rects)
+		{
+			if (obb(*i.bb, *j.bb))
+				cout << "Ãæµ¹µÊ!" << endl;
+		}
+	}
+
+	//cout << stage[0].bb->vCenterPos.x << ", " << stage[0].bb->vCenterPos.y << ", " << stage[0].bb->vCenterPos.z << endl;
+	
+
 	glutPostRedisplay();
 	glutTimerFunc(50, TimerFunction, 1);
 }

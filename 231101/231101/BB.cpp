@@ -13,6 +13,24 @@ BB::BB(int t = 1)
 void BB::Update(glm::mat4 m)
 {
 	matrix = m;
+
+	// centerpos 업데이트
+	vCenterPos = glm::vec3(matrix * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+
+	vAxisDir[0] = { 1.0f, 0.0f, 0.0f };
+	vAxisDir[1] = { 0.0f, 1.0f, 0.0f };
+	vAxisDir[2] = { 0.0f, 0.0f, 1.0f };
+
+	// 각 방향벡터 업데이트
+	for (int i = 0; i < 3; ++i)
+	{
+		vAxisDir[i] = glm::vec3(matrix * glm::vec4(vAxisDir[i], 1.0f)) - vCenterPos;
+		fAxisLen[i] = glm::length(vAxisDir[i]);
+		if (abs(fAxisLen[i]) < FLT_EPSILON)
+			vAxisDir[i] = { 0.0f, 0.0f, 0.0f };
+		else
+			vAxisDir[i] /= fAxisLen[i];
+	}
 }
 
 void BB::Render(GLuint shaderProgramID)
