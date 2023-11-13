@@ -1,5 +1,7 @@
 #include "stdafx.h"
-#include "object.h"
+#include "Object.h"
+#include "Rect.h"
+#include "BB.h"
 
 GLchar* vertexSource, * fragmentSource; //--- 소스코드 저장 변수
 GLuint vertexShader, fragmentShader; //--- 세이더 객체
@@ -21,8 +23,9 @@ char* filetobuf(const char*);
 
 POINT mousept;
 bool drag = false;
-vector<object> stage;
-vector<object> sphere;
+vector<Object> stage;
+vector<Object> spheres;
+vector<Rect> rects;
 
 glm::vec3 origin = { 0.0f, 0.0f, 0.0f };
 
@@ -35,21 +38,19 @@ void Reset()
 {
 	stage.clear();
 
-	cameraPos = glm::vec3(0.0f, 0.0f, 50.0f); //--- 카메라 위치
+	cameraPos = glm::vec3(0.0f, 0.0f, 120.0f); //--- 카메라 위치
 	cameraDirection = glm::vec3(0.0f, 0.0f, 0.0f); //--- 카메라 바라보는 방향
 	cameraUp = glm::vec3(0.0f, 1.0f, 0.0f); //--- 카메라 위쪽 방향
 	view = glm::mat4(1.0f);
 	cameraAngle = { 0.0f, 0.0f, 0.0f };
 
-	/*stage.push_back({ "plane.obj", {20.0f, 1.0f, 20.0f}, {0.0f,0.0f,0.0f}, {0.0f,-20.0f,0.0f} });
-	stage.push_back({ "plane.obj", {20.0f, 1.0f, 20.0f}, {0.0f,0.0f,0.0f}, {0.0f,20.0f,0.0f} });
-	stage.push_back({ "plane.obj", {20.0f, 1.0f, 20.0f}, {0.0f,0.0f,90.0f}, {20.0f,0.0f,0.0f} });
-	stage.push_back({ "plane.obj", {20.0f, 1.0f, 20.0f}, {0.0f,0.0f,90.0f}, {-20.0f,0.0f,0.0f} });
-	stage.push_back({ "plane.obj", {20.0f, 1.0f, 20.0f}, {90.0f,0.0f,0.0f}, {0.0f,0.0f,-20.0f} });*/
-	//stage.push_back({ "plane.obj", {10.0f, 1.0f, 20.0f}, {90.0f,0.0f,0.0f}, {10.0f,0.0f,20.0f} });
-	//stage.push_back({ "plane.obj", {10.0f, 1.0f, 20.0f}, {90.0f,0.0f,0.0f}, {-10.0f,0.0f,20.0f} });
+	stage.push_back({ "plane.obj", {40.0f, 0.0f, 40.0f}, {0.0f,0.0f,0.0f}, {0.0f,-20.0f,0.0f} });
+	stage.push_back({ "plane.obj", {40.0f, 0.0f, 40.0f}, {0.0f,0.0f,0.0f}, {0.0f,20.0f,0.0f} });
+	stage.push_back({ "plane.obj", {40.0f, 0.0f, 40.0f}, {0.0f,0.0f,90.0f}, {20.0f,0.0f,0.0f} });
+	stage.push_back({ "plane.obj", {40.0f, 0.0f, 40.0f}, {0.0f,0.0f,90.0f}, {-20.0f,0.0f,0.0f} });
+	stage.push_back({ "plane.obj", {40.0f, 0.0f, 40.0f}, {90.0f,0.0f,0.0f}, {0.0f,0.0f,-20.0f} });
 
-	sphere.push_back({ "bugatti.obj", {5.0f, 5.0f, 5.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f} });
+	rects.push_back({ "cube.obj" , { 5.0f, 5.0f, 5.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f } });
 
 	proj = glm::mat4(1.0f);
 	proj = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 200.0f); //--- 투영 공간 설정: fovy, aspect, near, far
@@ -87,11 +88,17 @@ GLvoid drawScene()
 	
 	glEnable(GL_DEPTH_TEST); 
 
-	/*for (object& i : stage)
-		i.render(shaderProgramID);*/
+	for (Object& i : stage)
+	{
+		i.Render(shaderProgramID);
+		i.bb->Render(shaderProgramID);
+	}
 
-	for (object& i : sphere)
-		i.render(shaderProgramID);
+	for (Rect& i : rects)
+	{
+		i.Render(shaderProgramID);
+		i.bb->Render(shaderProgramID);
+	}
 
 	glutSwapBuffers(); //--- 화면에 출력하기
 }
@@ -137,8 +144,11 @@ GLvoid Keyboardup(unsigned char key, int x, int y)
 
 GLvoid TimerFunction(int value)
 {
-	for (object& i : sphere)
-		i.update();
+	for (Object& i : stage)
+		i.Update();
+
+	for (Object& i : rects)
+		i.Update();
 
 	glutPostRedisplay();
 	glutTimerFunc(50, TimerFunction, 1);
@@ -162,7 +172,13 @@ GLvoid Motion(int x, int y)
 {
 	if (drag)
 	{
-
+		for (Object& i : stage)
+		{
+			i.origin = { 0.0f, 0.0f, 0.0f };
+			i.rotBy = { 0.0f, 0.0f, 0.0f };
+			i.rotByAngle.z += ((x - mousept.x)/ 10.0f);
+		}
+		mousept = { x,y };
 	}
 	glutPostRedisplay();
 }

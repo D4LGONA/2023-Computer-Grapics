@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "object.h"
+#include "Object.h"
 
 std::random_device rd;
 std::mt19937 dre(rd());
@@ -27,22 +27,27 @@ float dist(glm::vec3 p1, glm::vec3 p2)
 	return sqrt(powf(p2.x - p1.x, 2) + powf(p2.y - p1.y, 2) + powf(p2.z - p1.z, 2));
 }
 
-bool aabb(object& a, object& b)
+//bool aabb(Object& a, Object& b)
+//{
+//	glm::vec3 a_max = a.origin + a.T + a.S;
+//	glm::vec3 a_min = a.origin + a.T + (-a.S);
+//	glm::vec3 b_max = b.origin + b.T + b.S;
+//	glm::vec3 b_min = b.origin + b.T + (-b.S);
+//
+//	if (a_max.x < b_min.x || a_min.x > b_max.x) {
+//		return false; // X 축에서 충돌하지 않음
+//	}
+//	if (a_max.y < b_min.y || a_min.y > b_max.y) {
+//		return false; // Y 축에서 충돌하지 않음
+//	}
+//	if (a_max.z < b_min.z || a_min.z > b_max.z) {
+//		return false; // Z 축에서 충돌하지 않음
+//	}
+//
+//	return true;
+//}
+
+bool obb(BB& a, BB& b)
 {
-	glm::vec3 a_max = a.Origin + a.transition + a.scale;
-	glm::vec3 a_min = a.Origin + a.transition + (-a.scale);
-	glm::vec3 b_max = b.Origin + b.transition + b.scale;
-	glm::vec3 b_min = b.Origin + b.transition + (-b.scale);
-
-	if (a_max.x < b_min.x || a_min.x > b_max.x) {
-		return false; // X 축에서 충돌하지 않음
-	}
-	if (a_max.y < b_min.y || a_min.y > b_max.y) {
-		return false; // Y 축에서 충돌하지 않음
-	}
-	if (a_max.z < b_min.z || a_min.z > b_max.z) {
-		return false; // Z 축에서 충돌하지 않음
-	}
-
-	return true;
+	return false;
 }

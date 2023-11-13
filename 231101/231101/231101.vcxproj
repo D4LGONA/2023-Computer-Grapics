@@ -130,7 +130,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="22.cpp" />
-    <ClCompile Include="object.cpp" />
+    <ClCompile Include="BB.cpp" />
+    <ClCompile Include="Object.cpp" />
+    <ClCompile Include="Rect.cpp" />
     <ClCompile Include="stdafx.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -138,7 +140,9 @@
     <None Include="vertex.glsl" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="object.h" />
+    <ClInclude Include="BB.h" />
+    <ClInclude Include="Object.h" />
+    <ClInclude Include="Rect.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

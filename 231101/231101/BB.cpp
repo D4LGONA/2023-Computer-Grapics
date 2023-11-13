@@ -1,24 +1,24 @@
 #include "stdafx.h"
-#include "Object.h"
 #include "BB.h"
 
-Object::Object(const char* c, glm::vec3 s = { 1.0f, 1.0f, 1.0f }, glm::vec3 r = { 0.0f, 0.0f, 0.0f }, glm::vec3 t = {0.0f, 0.0f, 0.0f})
-	: S{s}, R{r}, T{t}
+BB::BB(int t = 1)
+	: type{t}
 {
-	Readobj(c);
-	bb = new BB(1);
+	if (t == 1)
+		Readobj("cube.obj");
+	else if (t == 2)
+		Readobj("sphere.obj");
 }
 
-void Object::Update()
+void BB::Update(glm::mat4 m)
 {
-	UpdateMatrix();
-	bb->Update(matrix);
+	matrix = m;
 }
 
-void Object::Render(GLuint shaderProgramID)
+void BB::Render(GLuint shaderProgramID)
 {
 	glBindVertexArray(vao);
-	
+
 	view = glm::lookAt(cameraPos, cameraDirection, cameraUp);
 	view = glm::rotate(view, glm::radians(cameraAngle.z), { 0.0f, 0.0f, 1.0f });
 	view = glm::rotate(view, glm::radians(cameraAngle.y), { 0.0f, 1.0f, 0.0f });
@@ -44,21 +44,13 @@ void Object::Render(GLuint shaderProgramID)
 	glUniformMatrix4fv(projLocation, 1, GL_FALSE, &proj[0][0]);
 
 	// 여기서 그리기
-	glDrawElements(GL_TRIANGLES, i.size(), GL_UNSIGNED_INT, 0);
-	
+	glDrawElements(GL_LINES, i.size(), GL_UNSIGNED_INT, 0);
+
 	glDisableVertexAttribArray(PosLocation); // Disable 필수!
 	glDisableVertexAttribArray(ColorLocation);
 }
 
-void Object::Remove()
-{
-	i.clear();
-	v.clear();
-	c.clear();
-	delete bb;
-}
-
-void Object::Readobj(const char* s)
+void BB::Readobj(const char* s)
 {
 	FILE* path = fopen(s, "r");
 	if (path == NULL)
@@ -105,9 +97,9 @@ void Object::Readobj(const char* s)
 				&temp_face[1], &temp_uv[1], &temp_normal[1],
 				&temp_face[2], &temp_uv[2], &temp_normal[2]);
 			fscanf(path, "%d//%d %d//%d %d//%d\n",
-				&temp_face[0],  &temp_normal[0],
-				&temp_face[1],  &temp_normal[1],
-				&temp_face[2],  &temp_normal[2]);
+				&temp_face[0], &temp_normal[0],
+				&temp_face[1], &temp_normal[1],
+				&temp_face[2], &temp_normal[2]);
 			face[faceIndex].x = temp_face[0] - 1;
 			face[faceIndex].y = temp_face[1] - 1;
 			face[faceIndex].z = temp_face[2] - 1;
@@ -125,7 +117,7 @@ void Object::Readobj(const char* s)
 	for (int i = 0; i < vertexnum; ++i)
 	{
 		v.push_back(vertex[i]);
-		c.push_back({ uidC(dre),uidC(dre),uidC(dre) });
+		c.push_back({ 0.0f, 0.0f, 0.0f });
 	}
 
 	for (int j = 0; j < facenum; ++j)
@@ -136,38 +128,11 @@ void Object::Readobj(const char* s)
 	}
 
 	InitBuffer();
-	UpdateMatrix();
 
 	fclose(path);
 }
 
-void Object::UpdateMatrix()
-{
-	matrix = glm::mat4(1.0f);
-
-	// 한 점을 기준으로 이동
-	matrix = glm::translate(matrix, rotBy);
-	matrix = glm::rotate(matrix, glm::radians(rotByAngle.z), { 0.0f, 0.0f, 1.0f });
-	matrix = glm::rotate(matrix, glm::radians(rotByAngle.y), { 0.0f, 1.0f, 0.0f });
-	matrix = glm::rotate(matrix, glm::radians(rotByAngle.x), { 1.0f, 0.0f, 0.0f });
-	matrix = glm::translate(matrix, -rotBy);
-
-	// 자체 이동
-	matrix = glm::translate(matrix, T + rotBy);
-	matrix = glm::rotate(matrix, glm::radians(R.x), {1.0f, 0.0f, 0.0f});
-	matrix = glm::rotate(matrix, glm::radians(R.y), {0.0f, 1.0f, 0.0f});
-	matrix = glm::rotate(matrix, glm::radians(R.z), {0.0f, 0.0f, 1.0f});
-	matrix = glm::scale(matrix, S);
-}
-
-void Object::RotByPoint(int n, bool b, glm::vec3 o)
-{
-	rotBy = o;
-	if (b) rotByAngle[n] += 5.0f;
-	else rotByAngle[n] -= 5.0f;
-}
-
-void Object::InitBuffer()
+void BB::InitBuffer()
 {
 	glGenVertexArrays(1, &vao); // VAO를 생성하고 할당합니다.
 	glBindVertexArray(vao); // VAO를 바인드합니다.
