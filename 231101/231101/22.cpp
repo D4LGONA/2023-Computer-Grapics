@@ -159,8 +159,7 @@ GLvoid TimerFunction(int value)
 		}
 	}
 
-	//cout << stage[0].bb->vCenterPos.x << ", " << stage[0].bb->vCenterPos.y << ", " << stage[0].bb->vCenterPos.z << endl;
-	
+	// 깃 업로드 테스트
 
 	glutPostRedisplay();
 	glutTimerFunc(50, TimerFunction, 1);
