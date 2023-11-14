@@ -18,6 +18,7 @@ class Object
 
 public:
 	class BB* bb; // 바운딩 박스
+	glm::vec3 dir;
 
 	glm::vec3 origin{0.0f, 0.0f, 0.0f}; // 물체가 기본도형 여러 개 붙은 녀석일 때, 부속 도형들의 원점을 정해주는 것 
 	glm::vec3 rotBy{ 0.0f, 0.0f, 0.0f }; // 공전 등을 구현할 때 한 점을 기준으로 회전하는 것
@@ -40,9 +41,19 @@ public:
 	void RotByPoint(int n, bool b, glm::vec3 o);
 	void SetRot(int n, float value) { R[n] = value; } // 객체 자체의 회전을 주어진 값 을 변경
 	void SetMove(int n, float value) { T[n] = value; }
+	glm::vec3 GetRot() { return R; }
 	glm::vec3 GetMinY()
 	{
-		auto result = min_element(v.begin(), v.end(), [this](const glm::vec3& a, const glm::vec3& b) {return a.y > b.y; });
+		vector<glm::vec3> tmp;
+
+		for (int i = 0; i < v.size(); ++i)
+		{
+			glm::vec3 t = matrix * glm::vec4(v[i], 1.0f);
+			tmp.push_back(t);
+		}
+
+		auto result = min_element(tmp.begin(), tmp.end(), [this](const glm::vec3& a, const glm::vec3& b) {return a.y > b.y; });
+
 		return *result;
 	}
 }; 

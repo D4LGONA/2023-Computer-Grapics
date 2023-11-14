@@ -2,6 +2,7 @@
 #include "Object.h"
 #include "Rect.h"
 #include "BB.h"
+#include "Sphere.h"
 
 GLchar* vertexSource, * fragmentSource; //--- 소스코드 저장 변수
 GLuint vertexShader, fragmentShader; //--- 세이더 객체
@@ -24,7 +25,7 @@ char* filetobuf(const char*);
 POINT mousept;
 bool drag = false;
 vector<Object> stage;
-vector<Object> spheres;
+vector<Sphere> spheres;
 vector<Rect> rects;
 Object* ground;
 
@@ -46,12 +47,17 @@ void Reset()
 	cameraAngle = { 0.0f, 0.0f, 0.0f };
 
 	stage.push_back({ "plane.obj", {40.0f, 0.1f, 40.0f}, {0.0f,0.0f,0.0f}, {0.0f,-20.0f,0.0f} });
-	stage.push_back({ "plane.obj", {40.0f, 0.1f, 40.0f}, {0.0f,0.0f,0.0f}, {0.0f,20.0f,0.0f} });
+	stage.push_back({ "plane.obj", {40.0f, 0.1f, 40.0f}, {0.0f,0.0f,180.0f}, {0.0f,20.0f,0.0f} });
 	stage.push_back({ "plane.obj", {40.0f, 0.1f, 40.0f}, {0.0f,0.0f,90.0f}, {20.0f,0.0f,0.0f} });
-	stage.push_back({ "plane.obj", {40.0f, 0.1f, 40.0f}, {0.0f,0.0f,90.0f}, {-20.0f,0.0f,0.0f} });
+	stage.push_back({ "plane.obj", {40.0f, 0.1f, 40.0f}, {0.0f,0.0f,-90.0f}, {-20.0f,0.0f,0.0f} });
 	stage.push_back({ "plane.obj", {40.0f, 0.1f, 40.0f}, {90.0f,0.0f,0.0f}, {0.0f,0.0f,-20.0f} });
 
-	rects.push_back({ "cube.obj" , { 5.0f, 5.0f, 5.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f } });
+	rects.push_back({ "cube.obj" , { 2.0f, 2.0f, 2.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 10.0f } });
+	rects.push_back({ "cube.obj" , { 4.0f, 4.0f, 4.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f } });
+	rects.push_back({ "cube.obj" , { 6.0f, 6.0f, 6.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, -10.0f } });
+
+	for(int i = 0; i < 20; ++i)
+		spheres.push_back({ "sphere.obj", {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, {uidC(dre), uidC(dre), uidC(dre)} });
 
 	proj = glm::mat4(1.0f);
 	proj = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 200.0f); //--- 투영 공간 설정: fovy, aspect, near, far
@@ -103,6 +109,12 @@ GLvoid drawScene()
 		i.bb->Render(shaderProgramID);
 	}
 
+	for (Sphere& i : spheres)
+	{
+		i.Render(shaderProgramID);
+		i.bb->Render(shaderProgramID);
+	}
+
 	glutSwapBuffers(); //--- 화면에 출력하기
 }
 //--- 다시그리기 콜백 함수
@@ -147,15 +159,16 @@ GLvoid Keyboardup(unsigned char key, int x, int y)
 
 GLvoid TimerFunction(int value)
 {
+	vector<glm::vec3> tmp;
+	for (Object& j : stage)
+		tmp.push_back(j.bb->vCenterPos);
+	auto t = min_element(stage.begin(), stage.end(), [](const Object& a, const Object& b) {return a.bb->vCenterPos.y < b.bb->vCenterPos.y; });
+	
+	if (obb(*rects[0].bb, *(*t).bb))
+		ground = &(*t);
+
 	for (Rect& i : rects)
 	{
-		vector<glm::vec3> tmp;
-		for (Object& j : stage)
-			tmp.push_back(j.GetMinY());
-		// 여기 고쳐야 함
-		auto dest = min_element(tmp.begin(), tmp.end(), [](const glm::vec3& a, const glm::vec3& b) {return a.y < b.y; });
-		glm::vec3 g = { (*dest).x, (*dest).y, 0.0f };
-		i.MoveRectSlide(g);
 		i.MoveRect();
 	}
 
@@ -165,21 +178,49 @@ GLvoid TimerFunction(int value)
 	for (Rect& i : rects)
 		i.Update();
 
+	for (Sphere& i : spheres)
+		i.Update();
+
 	for (Object& i : stage)
 	{
 		for (Rect& j : rects)
 		{
 			if (obb(*i.bb, *j.bb))
 			{
-				ground = &i;
-				// i의 기울기를 j만큼 바꿔야 함
-				while (obb(*i.bb, *j.bb))
+				if (&i == ground) // 땅이랑 부딪혔을때
 				{
-					j.Move(1, 0.1f);
-					j.speed.y = 0.0f;
-					j.Update();
+					while (obb(*i.bb, *j.bb))
+					{
+						j.Move(1, 0.1f);
+						j.speed.y = 0.0f;
+						j.Update();
+					}
+					j.SetRot(2, (i.rotByAngle.z + i.GetRot().z));
 				}
-				j.SetRot(2, i.rotByAngle.z);
+				else
+				{
+					j.speed.x *= -0.5f;
+					if (abs(j.speed.x) <= 0.01f)
+					{
+						j.speed.x = 0.0f;
+						j.isStop = true;
+					}
+				}
+			}
+		}
+
+		for (Sphere& j : spheres)
+		{
+			if (j.ischecked)
+			{
+				j.ischecked = !j.ischecked;
+				continue;
+			}
+			if (obb(*i.bb, *j.bb) && !j.ischecked)
+			{
+				j.ischecked = true;
+				j.dir = (glm::vec3{ 2 * i.bb->vAxisDir[1].x, 2 * i.bb->vAxisDir[1].y, 2 * i.bb->vAxisDir[1].z } - j.dir) / 1.1f;
+				j.dir /= glm::length(j.dir);
 			}
 		}
 	}
@@ -212,7 +253,11 @@ GLvoid Motion(int x, int y)
 			i.rotBy = { 0.0f, 0.0f, 0.0f };
 			i.rotByAngle.z += ((x - mousept.x)/ 10.0f);
 		}
+
 		mousept = { x,y };
+
+		for (Rect& i : rects)
+			i.isStop = false;
 	}
 	glutPostRedisplay();
 }

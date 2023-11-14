@@ -4,9 +4,10 @@
 class Rect : public Object
 {
 	float gravity = -0.2f;
-	float accel = 0.2f;
 
 public:
+	float accel = 0.05f;
+	bool isStop = false;
 	glm::vec3 dest = { 0.0f, 0.0f, 0.0f };
 	glm::vec3 speed = { 0.0f, 0.0f, 0.0f };
 	glm::vec3 dir = { 0.0f, 0.0f, 0.0f };
@@ -18,4 +19,3 @@ public:
 	void MoveRect(); // y축으로만 이동하는 녀석
 	void MoveRectSlide(glm::vec3 dest);
 };
-

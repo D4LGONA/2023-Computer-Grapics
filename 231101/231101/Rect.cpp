@@ -12,12 +12,31 @@ void Rect::Update()
 
 void Rect::MoveRect()
 {
-	if(dir.y != 0)
-		speed.x += (accel * (dir.x / dir.y));
 	speed.y += gravity;
 
-	Move(1, speed.y);
+	if (abs(GetRot().z) < FLT_EPSILON)
+	{
+		speed.x = 0.0f;
+	}
+	else
+	{
+		while (GetRot().z < 0.0f)
+			Rot(2, 360.0f);
+
+		while (GetRot().z > 360.0f)
+			Rot(2, -360.0f);
+
+		if (!isStop)
+		{
+			if (GetRot().z > 0.0f && GetRot().z < 180.0f)
+				speed.x -= accel;
+			else
+				speed.x += accel;
+		}
+	}
+
 	Move(0, speed.x);
+	Move(1, speed.y);
 }
 
 void Rect::MoveRectSlide(glm::vec3 dest)

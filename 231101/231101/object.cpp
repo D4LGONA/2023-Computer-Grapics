@@ -14,10 +14,11 @@ void Object::Update()
 	UpdateMatrix();
 
 	bb->vCenterPos = T + origin;
-	bb->vAxisDir[0] = T + origin + glm::vec3{1.0f, 0.0f, 0.0f};
-	bb->vAxisDir[1] = T + origin + glm::vec3{0.0f, 1.0f, 0.0f};
-	bb->vAxisDir[2] = T + origin + glm::vec3{0.0f, 0.0f, 1.0f};
+	bb->vAxisDir[0] = T + origin + glm::vec3{ 1.0f, 0.0f, 0.0f };
+	bb->vAxisDir[1] = T + origin + glm::vec3{ 0.0f, 1.0f, 0.0f };
+	bb->vAxisDir[2] = T + origin + glm::vec3{ 0.0f, 0.0f, 1.0f };
 	bb->Update(matrix);
+	//dir = {bb->vAxisDir[0].x, bb->vAxisDir[1].y, 0.0f};
 }
 
 void Object::Render(GLuint shaderProgramID)
