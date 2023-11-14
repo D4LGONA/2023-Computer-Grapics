@@ -5,6 +5,8 @@
 
 Robot::Robot(glm::vec3 startpt, float scale)
 {
+	origin = startpt;
+
 	// ´Ù¸®
 	parts.push_back({ "cube.obj", {2.0f, 6.0f, 2.0f}, {0.0f,0.0f,0.0f}, {-1.0f, -17.0f, 0.0f} });
 	parts.push_back({ "cube.obj", {2.0f, 6.0f, 2.0f}, {0.0f,0.0f,0.0f}, {1.0f, -17.0f, 0.0f} });
@@ -21,6 +23,11 @@ Robot::Robot(glm::vec3 startpt, float scale)
 
 	// nose
 	parts.push_back({ "cube.obj", {0.2f,0.2f,2.0f}, {0.0f,0.0f,0.0f}, {0.0f, -7.0f, 1.0f} });
+
+	for (int i = 0; i < parts.size(); ++i)
+	{
+		parts[i].scale = { scale, scale, scale };
+	}
 
 }
 
@@ -81,12 +88,6 @@ void Robot::Move()
 	dir.y += gravity;
 
 	origin += dir;
-	/*for (int i = 0; i < parts.size(); ++i)
-	{
-		parts[i].Move(0, dir.x); 
-		parts[i].Move(1, dir.y); 
-		parts[i].Move(2, dir.z); 
-	}*/
 }
 
 void Robot::Move(int n, float s)

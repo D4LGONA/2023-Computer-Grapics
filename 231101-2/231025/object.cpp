@@ -155,6 +155,7 @@ void Object::UpdateMatrix()
 	matrix = glm::rotate(matrix, glm::radians(rotByAngle.z), { 0.0f, 0.0f, 1.0f });
 	matrix = glm::rotate(matrix, glm::radians(rotByAngle.y), { 0.0f, 1.0f, 0.0f });
 	matrix = glm::rotate(matrix, glm::radians(rotByAngle.x), { 1.0f, 0.0f, 0.0f });
+	matrix = glm::scale(matrix, scale);
 	matrix = glm::translate(matrix, -rotBy);
 
 	// 자체 이동

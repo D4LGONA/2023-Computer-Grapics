@@ -24,6 +24,8 @@ public:
 	glm::vec3 rotBy{ 0.0f, 0.0f, 0.0f }; // 공전 등을 구현할 때 한 점을 기준으로 회전하는 것
 	glm::vec3 rotByAngle{ 0.0f, 0.0f, 0.0f }; // rotTo 기준 회전 각도
 
+	glm::vec3 scale = {1.0f, 1.0f, 1.0f};
+
 	// 여기부터
 	Object(const char*, glm::vec3, glm::vec3, glm::vec3);
 	Object() {}

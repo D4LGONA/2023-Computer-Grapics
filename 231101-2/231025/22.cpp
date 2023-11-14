@@ -25,6 +25,7 @@ POINT mousept;
 vector<Object> stage;
 vector<Robot> r;
 vector<Object> box; // 밟으면 들어가는 애
+vector<Object> cyl; 
 
 struct obs
 {
@@ -58,10 +59,13 @@ void Reset()
 	}
 
 	r.push_back({ glm::vec3{ 0.0f, 0.0f ,0.0f }, 1.0f });
+	r.push_back({ glm::vec3{ 0.0f, 0.0f, 5.0f }, 0.5f });
 
 
 	//for(int i = 0; i < 5; ++i)
 	box.push_back({ "cube.obj", {5.0f, 5.0f, 5.0f }, {0.0f, 0.0f, 0.0f}, {0.0f, -20.0f, 0.0f} });
+
+	cyl.push_back({ "cylinder.obj", {5.0f, 100.0f, 5.0f}, {0.0f, 0.0f, 0.0f}, {-25.0f + 2.5f, -20.0f, -25.0f + 2.5f} });
 
 	proj = glm::mat4(1.0f);
 	proj = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 200.0f); //--- 투영 공간 설정: fovy, aspect, near, far
@@ -117,6 +121,14 @@ GLvoid drawScene()
 		i.bb->Render(shaderProgramID);
 	}
 
+
+	for (Object& i : cyl)
+	{
+		i.Render(shaderProgramID);
+		i.bb->Render(shaderProgramID);
+	}
+
+
 	glutSwapBuffers(); //--- 화면에 출력하기
 }
 //--- 다시그리기 콜백 함수
@@ -131,6 +143,11 @@ GLvoid Keyboarddown(unsigned char key, int x, int y)
 	{
 	case 'j': // 점프
 		r[0].Jump();
+		break;
+
+	case 'k':
+		for (int i = 1; i < r.size(); ++i)
+			r[i].Jump();
 		break;
 
 	case 'w':
@@ -253,6 +270,10 @@ GLvoid TimerFunction(int value)
 	for (Object& j : box)
 		j.Update();
 
+	for (Object& i : cyl)
+		i.Update();
+
+
 	// 충돌 체크 - 플레이어와 땅
 	for (Object& j : stage)
 	{
@@ -292,13 +313,34 @@ GLvoid TimerFunction(int value)
 					}
 				}
 			}
-			if (b)
-				j.Move(1, -0.1f);
-			else if(!b && j.bb->vCenterPos.y < -17.5f)
-				j.Move(1, 0.1f);
-				
+			
+		}
+		if (b)
+			j.Move(1, -0.1f);
+		else if (!b && j.bb->vCenterPos.y < -17.5f)
+			j.Move(1, 0.1f);
+	}
+
+	//충돌체크 - 플레이어와 기둥
+	for (Object& j : cyl)
+	{
+		for (Robot& i : r)
+		{
+			for (int k = 0; k < 7; ++k)
+			{
+				if (obb(*i.GetBB(k), *j.bb) && i.origin.y > 0.0f)
+				{
+					while (obb(*i.GetBB(k), *j.bb))
+					{
+						i.origin.x -= i.dir.x/ 10.0f;
+						i.origin.z -= i.dir.z/ 10.0f;
+						i.Update();
+					}
+				}
+			}
 		}
 	}
+
 
 	glutPostRedisplay();
 	glutTimerFunc(50, TimerFunction, 1);
