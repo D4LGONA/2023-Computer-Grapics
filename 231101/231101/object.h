@@ -35,8 +35,14 @@ public:
 	virtual void Update(); // 물체별로 함수 다르게 실행시키기 위해 virtual로 뺐음 굳이 이긴 해요
 	// 여기까지는 건드리지 말도록
 
-	void Move(int n, float value) { T[n] += value; } // T[n]의 값을 value 만큼 변경
+	void Move(int n, float value) { T[n] += value;  } // T[n]의 값을 value 만큼 변경
 	void Rot(int n, float value) { R[n] += value; } // 객체 자체의 회전, R[n]의 값을 value 만큼 변경
 	void RotByPoint(int n, bool b, glm::vec3 o);
-
-};
+	void SetRot(int n, float value) { R[n] = value; } // 객체 자체의 회전을 주어진 값 을 변경
+	void SetMove(int n, float value) { T[n] = value; }
+	glm::vec3 GetMinY()
+	{
+		auto result = min_element(v.begin(), v.end(), [this](const glm::vec3& a, const glm::vec3& b) {return a.y > b.y; });
+		return *result;
+	}
+}; 

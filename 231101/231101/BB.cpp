@@ -17,9 +17,9 @@ void BB::Update(glm::mat4 m)
 	// centerpos 업데이트
 	vCenterPos = glm::vec3(matrix * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
 
-	vAxisDir[0] = { 1.0f, 0.0f, 0.0f };
-	vAxisDir[1] = { 0.0f, 1.0f, 0.0f };
-	vAxisDir[2] = { 0.0f, 0.0f, 1.0f };
+	vAxisDir[0] = { 0.5f, 0.0f, 0.0f };
+	vAxisDir[1] = { 0.0f, 0.5f, 0.0f };
+	vAxisDir[2] = { 0.0f, 0.0f, 0.5f };
 
 	// 각 방향벡터 업데이트
 	for (int i = 0; i < 3; ++i)

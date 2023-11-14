@@ -26,6 +26,7 @@ bool drag = false;
 vector<Object> stage;
 vector<Object> spheres;
 vector<Rect> rects;
+Object* ground;
 
 glm::vec3 origin = { 0.0f, 0.0f, 0.0f };
 
@@ -44,17 +45,19 @@ void Reset()
 	view = glm::mat4(1.0f);
 	cameraAngle = { 0.0f, 0.0f, 0.0f };
 
-	stage.push_back({ "plane.obj", {40.0f, 0.0f, 40.0f}, {0.0f,0.0f,0.0f}, {0.0f,-20.0f,0.0f} });
-	stage.push_back({ "plane.obj", {40.0f, 0.0f, 40.0f}, {0.0f,0.0f,0.0f}, {0.0f,20.0f,0.0f} });
-	stage.push_back({ "plane.obj", {40.0f, 0.0f, 40.0f}, {0.0f,0.0f,90.0f}, {20.0f,0.0f,0.0f} });
-	stage.push_back({ "plane.obj", {40.0f, 0.0f, 40.0f}, {0.0f,0.0f,90.0f}, {-20.0f,0.0f,0.0f} });
-	stage.push_back({ "plane.obj", {40.0f, 0.0f, 40.0f}, {90.0f,0.0f,0.0f}, {0.0f,0.0f,-20.0f} });
+	stage.push_back({ "plane.obj", {40.0f, 0.1f, 40.0f}, {0.0f,0.0f,0.0f}, {0.0f,-20.0f,0.0f} });
+	stage.push_back({ "plane.obj", {40.0f, 0.1f, 40.0f}, {0.0f,0.0f,0.0f}, {0.0f,20.0f,0.0f} });
+	stage.push_back({ "plane.obj", {40.0f, 0.1f, 40.0f}, {0.0f,0.0f,90.0f}, {20.0f,0.0f,0.0f} });
+	stage.push_back({ "plane.obj", {40.0f, 0.1f, 40.0f}, {0.0f,0.0f,90.0f}, {-20.0f,0.0f,0.0f} });
+	stage.push_back({ "plane.obj", {40.0f, 0.1f, 40.0f}, {90.0f,0.0f,0.0f}, {0.0f,0.0f,-20.0f} });
 
 	rects.push_back({ "cube.obj" , { 5.0f, 5.0f, 5.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f } });
 
 	proj = glm::mat4(1.0f);
 	proj = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 200.0f); //--- 투영 공간 설정: fovy, aspect, near, far
 	proj = glm::translate(proj, glm::vec3(0.0, 0.0, 30.0f));
+
+	ground = &stage[0];
 }
 
 void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
@@ -144,22 +147,42 @@ GLvoid Keyboardup(unsigned char key, int x, int y)
 
 GLvoid TimerFunction(int value)
 {
+	for (Rect& i : rects)
+	{
+		vector<glm::vec3> tmp;
+		for (Object& j : stage)
+			tmp.push_back(j.GetMinY());
+		// 여기 고쳐야 함
+		auto dest = min_element(tmp.begin(), tmp.end(), [](const glm::vec3& a, const glm::vec3& b) {return a.y < b.y; });
+		glm::vec3 g = { (*dest).x, (*dest).y, 0.0f };
+		i.MoveRectSlide(g);
+		i.MoveRect();
+	}
+
 	for (Object& i : stage)
 		i.Update();
 
-	for (Object& i : rects)
+	for (Rect& i : rects)
 		i.Update();
 
 	for (Object& i : stage)
 	{
-		for (Object& j : rects)
+		for (Rect& j : rects)
 		{
 			if (obb(*i.bb, *j.bb))
-				cout << "충돌됨!" << endl;
+			{
+				ground = &i;
+				// i의 기울기를 j만큼 바꿔야 함
+				while (obb(*i.bb, *j.bb))
+				{
+					j.Move(1, 0.1f);
+					j.speed.y = 0.0f;
+					j.Update();
+				}
+				j.SetRot(2, i.rotByAngle.z);
+			}
 		}
 	}
-
-	// 깃 업로드 테스트
 
 	glutPostRedisplay();
 	glutTimerFunc(50, TimerFunction, 1);
