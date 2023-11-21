@@ -26,12 +26,8 @@ vector<Object> stage;
 vector<Robot> r;
 vector<Object> box; // 밟으면 들어가는 애
 vector<Object> cyl; 
-
-struct obs
-{
-
-};
-
+vector<Object> be;
+int k = 1;
 
 void cameraRot(int n)
 {
@@ -63,9 +59,14 @@ void Reset()
 
 
 	//for(int i = 0; i < 5; ++i)
-	box.push_back({ "cube.obj", {5.0f, 5.0f, 5.0f }, {0.0f, 0.0f, 0.0f}, {0.0f, -20.0f, 0.0f} });
+	box.push_back({ "cube.obj", {5.0f, 5.0f, 5.0f }, {0.0f, 0.0f, 0.0f}, {0.0f, -20.0f, -10.0f} });
 
 	cyl.push_back({ "cylinder.obj", {5.0f, 100.0f, 5.0f}, {0.0f, 0.0f, 0.0f}, {-25.0f + 2.5f, -20.0f, -25.0f + 2.5f} });
+
+	be.push_back({ "cube.obj", {20.0f, 5.0f, 5.0f }, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f} });
+	be.push_back({ "cube.obj", {5.0f, 20.0f, 5.0f }, {0.0f, 0.0f, 0.0f}, {-7.5f, -10.0f, 0.0f} });
+	be.push_back({ "cube.obj", {5.0f, 20.0f, 5.0f }, {0.0f, 0.0f, 0.0f}, {7.5f, -10.0f, 0.0f} });
+
 
 	proj = glm::mat4(1.0f);
 	proj = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 200.0f); //--- 투영 공간 설정: fovy, aspect, near, far
@@ -128,6 +129,11 @@ GLvoid drawScene()
 		i.bb->Render(shaderProgramID);
 	}
 
+	for (Object& i : be)
+	{
+		i.Render(shaderProgramID);
+		i.bb->Render(shaderProgramID);
+	}
 
 	glutSwapBuffers(); //--- 화면에 출력하기
 }
@@ -145,6 +151,10 @@ GLvoid Keyboarddown(unsigned char key, int x, int y)
 		r[0].Jump();
 		break;
 
+	case'i':
+		r.push_back({ glm::vec3{ 0.0f, 0.0f, 5.0f }, 0.5f });
+		break;
+
 	case 'k':
 		for (int i = 1; i < r.size(); ++i)
 			r[i].Jump();
@@ -156,6 +166,12 @@ GLvoid Keyboarddown(unsigned char key, int x, int y)
 			i.RotationY(180.0f);
 			i.dir.z = -1.0f;
 		}
+
+		for (int i = 1; i < r.size(); ++i)
+		{
+			r[i].origin.z = r[0].origin.z + (2.0f * i);
+			r[i].origin.x = r[0].origin.x;
+		}
 		break;
 
 	case 'a':
@@ -163,6 +179,12 @@ GLvoid Keyboarddown(unsigned char key, int x, int y)
 		{
 			i.RotationY(270.0f);
 			i.dir.x = -1.0f;
+		}
+
+		for (int i = 1; i < r.size(); ++i)
+		{
+			r[i].origin.z = r[0].origin.z;
+			r[i].origin.x = r[0].origin.x + (2.0f * i);
 		}
 		break;
 
@@ -172,6 +194,12 @@ GLvoid Keyboarddown(unsigned char key, int x, int y)
 			i.RotationY(0.0f);
 			i.dir.z = 1.0f;
 		}
+
+		for (int i = 1; i < r.size(); ++i)
+		{
+			r[i].origin.z = r[0].origin.z - (2.0f * i);
+			r[i].origin.x = r[0].origin.x;
+		}
 		break;
 
 	case 'd':
@@ -179,6 +207,12 @@ GLvoid Keyboarddown(unsigned char key, int x, int y)
 		{
 			i.RotationY(90.0f);
 			i.dir.x = 1.0f;
+		}
+
+		for (int i = 1; i < r.size(); ++i)
+		{
+			r[i].origin.z = r[0].origin.z;
+			r[i].origin.x = r[0].origin.x - (2.0f * i);
 		}
 		break;
 
@@ -258,6 +292,15 @@ GLvoid Keyboardup(unsigned char key, int x, int y)
 
 GLvoid TimerFunction(int value)
 {
+	for (int i = 0; i < r.size(); ++i)
+	{
+		if (r[i].origin.y < -20.0f)
+		{
+			r.erase(r.begin() + i);
+			i--;
+		}
+	}
+
 	for (Robot& i : r)
 		i.Move();
 
@@ -271,6 +314,9 @@ GLvoid TimerFunction(int value)
 		j.Update();
 
 	for (Object& i : cyl)
+		i.Update();
+
+	for (Object& i : be)
 		i.Update();
 
 
@@ -302,7 +348,7 @@ GLvoid TimerFunction(int value)
 		{
 			for (int k = 0; k < 7; ++k)
 			{
-				if (obb(*i.GetBB(k), *j.bb) && i.origin.y > 0.0f)
+				if (obb(*i.GetBB(k), *j.bb))
 				{
 					b = true;
 					while (obb(*i.GetBB(k), *j.bb))
@@ -341,6 +387,26 @@ GLvoid TimerFunction(int value)
 		}
 	}
 
+	// 충돌체크 - 플레이어와 ㄷ자기둥
+	for (Object& j : be)
+	{
+		for (Robot& i : r)
+		{
+			for (int k = 0; k < 7; ++k)
+			{
+				if (obb(*i.GetBB(k), *j.bb) && i.origin.y > 0.0f)
+				{
+					while (obb(*i.GetBB(k), *j.bb))
+					{
+						i.origin.x -= i.dir.x / 10.0f;
+						i.origin.z -= i.dir.z / 10.0f;
+						i.origin.y -= i.dir.y / 10.0f;
+						i.Update();
+					}
+				}
+			}
+		}
+	}
 
 	glutPostRedisplay();
 	glutTimerFunc(50, TimerFunction, 1);

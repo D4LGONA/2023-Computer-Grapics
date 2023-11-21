@@ -28,6 +28,10 @@ vector<Object> stage;
 vector<Sphere> spheres;
 vector<Rect> rects;
 Object* ground;
+Object* Left = nullptr;
+Object* Right = nullptr;
+
+bool _y = false;
 
 glm::vec3 origin = { 0.0f, 0.0f, 0.0f };
 
@@ -127,6 +131,11 @@ GLvoid Keyboarddown(unsigned char key, int x, int y)
 {
 	switch (key)
 	{
+	case'y':
+		_y = !_y;
+		
+		break;
+
 	case 'z':
 		cameraPos.z += 1.0f;
 		break;
@@ -159,12 +168,30 @@ GLvoid Keyboardup(unsigned char key, int x, int y)
 
 GLvoid TimerFunction(int value)
 {
+	if(_y)
+	{
+		for (Object& i : stage)
+		{
+			i.origin = { 0.0f, 0.0f, 0.0f };
+			i.rotBy = { 0.0f, 0.0f, 0.0f };
+			i.rotByAngle.z += 1.0f;
+		}
+		for (Rect& i : rects)
+		{
+			if (Left != nullptr)
+				i.Move(0, 0.5f);
+			if (Right != nullptr)
+				i.Move(0, -0.5f);
+		}
+	}
+
+
 	vector<glm::vec3> tmp;
 	for (Object& j : stage)
 		tmp.push_back(j.bb->vCenterPos);
 	auto t = min_element(stage.begin(), stage.end(), [](const Object& a, const Object& b) {return a.bb->vCenterPos.y < b.bb->vCenterPos.y; });
 	
-	if (obb(*rects[0].bb, *(*t).bb))
+	//if (obb(*rects[0].bb, *(*t).bb))
 		ground = &(*t);
 
 	for (Rect& i : rects)
@@ -199,6 +226,17 @@ GLvoid TimerFunction(int value)
 				}
 				else
 				{
+					if (i.bb->vCenterPos.x < j.bb->vCenterPos.x)
+					{
+						Left = &i;
+						Right = nullptr;
+					}
+					else
+					{
+						Right = &i;
+						Left = nullptr;
+					}
+
 					j.speed.x *= -0.5f;
 					if (abs(j.speed.x) <= 0.01f)
 					{
@@ -221,6 +259,7 @@ GLvoid TimerFunction(int value)
 				j.ischecked = true;
 				j.dir = (glm::vec3{ 2 * i.bb->vAxisDir[1].x, 2 * i.bb->vAxisDir[1].y, 2 * i.bb->vAxisDir[1].z } - j.dir) / 1.1f;
 				j.dir /= glm::length(j.dir);
+				j.dir.z *= -1.0f;
 			}
 		}
 	}
@@ -252,7 +291,26 @@ GLvoid Motion(int x, int y)
 			i.origin = { 0.0f, 0.0f, 0.0f };
 			i.rotBy = { 0.0f, 0.0f, 0.0f };
 			i.rotByAngle.z += ((x - mousept.x)/ 10.0f);
+			for (Rect& j : rects)
+			{
+				//j.SetRot(2, (i.rotByAngle.z + i.GetRot().z));
+
+				if (obb(*i.bb, *j.bb))
+				{
+					if (&i == ground) // ¶¥ÀÌ¶û ºÎµúÇûÀ»¶§
+					{
+						while (obb(*i.bb, *j.bb))
+						{
+							j.Move(1, 0.1f);
+							j.speed.y = 0.0f;
+							j.Update();
+						}
+						j.SetRot(2, (i.rotByAngle.z + i.GetRot().z));
+					}
+				}
+			}
 		}
+
 
 		mousept = { x,y };
 
