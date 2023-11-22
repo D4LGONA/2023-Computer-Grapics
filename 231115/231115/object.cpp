@@ -74,9 +74,7 @@ void Object::Render(GLuint ShaderProgram)
 	glUniformMatrix4fv(projLocation, 1, GL_FALSE, &proj[0][0]);
 	
 	for (int i = 0; i < v.size(); i += 3)
-	{
 		glDrawArrays(GL_TRIANGLES, i, 3);
-	}
 
 	glDisableVertexAttribArray(PosLocation); // Disable ÇÊ¼ö!
 	glDisableVertexAttribArray(NormalLocation);

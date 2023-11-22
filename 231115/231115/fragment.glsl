@@ -35,6 +35,10 @@ void main(void)
 	}
 	else
 	{
-		FragColor = vec4 (objectColor, 1.0);
+		vec3 ambientLight = {0.3f, 0.3f, 0.3f}; //--- 주변 조명 세기
+		vec3 ambient = ambientLight * lightColor; //--- 주변 조명 값
+
+		vec3 result = ambient * objectColor; //--- 최종 조명 설정된 픽셀 색상: (주변+산란반사+거울반사조명)*객체 색상
+		FragColor = vec4 (result, 1.0);
 	}
 }
