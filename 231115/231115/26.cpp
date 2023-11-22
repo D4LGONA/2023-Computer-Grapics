@@ -108,6 +108,10 @@ GLvoid Keyboarddown(unsigned char key, int x, int y)
 	case 'm': // 조명 끄고 키기
 		break;
 
+	case 'c':
+		lightColor = { uidC(dre), uidC(dre) , uidC(dre) };
+		break;
+
 	case'z': // 조명 가까이
 		L_distance -= 0.5f;
 		break;
@@ -120,10 +124,6 @@ GLvoid Keyboarddown(unsigned char key, int x, int y)
 		spinLight = !spinLight;
 		break;
 	
-	case 'n':
-		lightColor = { uidC(dre), uidC(dre) , uidC(dre) };
-		break;
-
 	case 'p': // 직각투영?
 		proj = glm::mat4(1.0f);
 		proj = glm::ortho(-50.0f, 50.0f, -50.0f, 50.0f, -50.0f, 50.0f);
@@ -164,9 +164,12 @@ GLvoid TimerFunction(int value)
 		lightPos.x = L_distance * cos(glm::radians(lightAngle));
 		lightPos.z = L_distance * sin(glm::radians(lightAngle));
 
-		lightbox->SetMove(0, lightPos.x);
+		float tmpx = (L_distance + 3.0f) * cos(glm::radians(lightAngle));
+		float tmpz = (L_distance + 3.0f) * sin(glm::radians(lightAngle));
+
+		lightbox->SetMove(0, tmpx);
 		lightbox->SetMove(1, lightPos.y);
-		lightbox->SetMove(2, lightPos.z);
+		lightbox->SetMove(2, tmpz);
 	}
 
 	glutPostRedisplay();
