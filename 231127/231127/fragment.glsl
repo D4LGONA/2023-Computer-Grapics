@@ -11,12 +11,12 @@ uniform vec3 lightPos; // 조명 위치
 uniform vec3 objectColor; // 물체색
 uniform vec3 viewPos; // 추가: 관찰자의 위치
 uniform bool isLight;
+uniform float ambientLight;
 
 void main(void) 
 {
 	if(isLight)
 	{
-		float ambientLight = 0.3f; //--- 주변 조명 세기
 		vec3 ambient = ambientLight * lightColor; //--- 주변 조명 값
 
 		vec3 normalVector = normalize(Normal);
@@ -35,8 +35,8 @@ void main(void)
 	}
 	else
 	{
-		vec3 ambientLight = {0.3f, 0.3f, 0.3f}; //--- 주변 조명 세기
-		vec3 ambient = ambientLight * lightColor; //--- 주변 조명 값
+		float amb = 0.0f;
+		vec3 ambient = amb * lightColor; //--- 주변 조명 값
 
 		vec3 result = ambient * objectColor; //--- 최종 조명 설정된 픽셀 색상: (주변+산란반사+거울반사조명)*객체 색상
 		FragColor = vec4 (result, 1.0);

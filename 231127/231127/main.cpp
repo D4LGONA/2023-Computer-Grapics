@@ -1,11 +1,11 @@
 #include "stdafx.h"
 #include "object.h"
 
+uniform_real_distribution _uid{ -50.0f, 50.0f };
+
 GLchar* vertexSource, * fragmentSource; //--- 소스코드 저장 변수
 GLuint vertexShader, fragmentShader; //--- 세이더 객체
 GLuint shaderProgramID; //--- 셰이더 프로그램
-
-uniform_real_distribution<float> uidp{-20.0f, 20.0f};
 
 void make_shaderProgram();
 void make_vertexShaders();
@@ -19,48 +19,40 @@ GLvoid Mouse(int button, int state, int x, int y);
 GLvoid Motion(int x, int y);
 char* filetobuf(const char*);
 
+
 POINT mousept;
-vector<vector<Object*>> v;
 
-bool spinLight = false;
-int w_count = 0;
-int h_count = 0;
+Object* stage;
+vector<Object*> corns;
+vector<Object*> snows;
 
-bool _1 = false;
-bool _2 = false;
-bool _3 = false;
+Object lightbox;
 
-// 전체 사이즈는 무조건 50*50으로 고정합니다. 그래서 x와 z scale이 달라질 수 있습니다.
+bool _s = false;
+bool _r = false;
+
+Object* target = nullptr;
+
+float lightangle = -90.0f;
+float _distance = 100.0f;
+float RA = 5.0f;
+glm::vec3 pts[4] = { {_distance, _distance, 0.0f}, {0.0f, _distance, _distance}, {-_distance, _distance, 0.0f}, {0.0f, _distance, -_distance} };
+int cadfadrg = -1;
+
 void Reset()
 {
-	if (v.size() != 0)
-	{
-		for (auto& i : v)
-		{
-			for (auto& j : i)
-				delete j;
-			i.clear();
-		}
-		v.clear();
-	}
+	for (int i = 0; i < 6; ++i)
+		corns.push_back(new Object("corn.obj", shaderProgramID, { 0.0f, 1.0f, 1.0f }, i));
+	target = corns[0];
+	
+	for (int i = 0; i < 100; ++i)
+		snows.push_back( new Object("sphere.obj", shaderProgramID, {1.0f, 1.0f, 1.0f }, {0.0f, 0.0f, 0.0f}, { _uid(dre), 200.0f, _uid(dre)}, {1.0f, 1.0f, 1.0f}) );
+	
+	lightbox = Object{ "cube.obj", shaderProgramID, {2.0f, 2.0f, 2.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f} };
 
-	cout << "가로, 세로 개수 값을 입력하세요: ";
-	cin >> w_count >> h_count;
+	stage = new Object{ "plane.obj", shaderProgramID, {50.0f, 1.0f, 50.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 1.0f} };
 
-	float s_X = 50.0f / float(w_count);
-	float s_Z = 50.0f / float(h_count);
-
-	for (int i = 0; i < h_count; ++i)
-	{
-		v.push_back(vector<Object*>());
-		for (int j = 0; j < w_count; ++j)
-		{
-			v[i].push_back(new Object("cube.obj", shaderProgramID, { s_X, 1.0f, s_Z }, { 0.0f, 0.0f, 0.0f }, {-25.0f + (j * s_X) + s_X / 2.0f, 0.0f, 25.0f - (i * s_Z) - s_Z / 2.0f}, {1.0f, 0.0f, 1.0f}));
-		}
-	}
-
-
-	cameraPos = glm::vec3(0.0f, 100.0f, 100.0f); //--- 카메라 위치
+	cameraPos = glm::vec3(0.0f, 150.0f, 150.0f); //--- 카메라 위치
 	cameraDirection = glm::vec3(0.0f, 0.0f, 0.0f); //--- 카메라 바라보는 방향
 	cameraUp = glm::vec3(0.0f, 1.0f, 0.0f); //--- 카메라 위쪽 방향
 	view = glm::mat4(1.0f);
@@ -107,12 +99,13 @@ GLvoid drawScene()
 	
 	glEnable(GL_DEPTH_TEST); 
 
+	for (Object*& o : snows)
+		o->Render();
 
-	for (auto& i : v)
-	{
-		for (auto& j : i)
-			j->Render();
-	}
+	stage->Render();
+	lightbox.Render();
+
+	target->Render();
 
 	glutSwapBuffers(); //--- 화면에 출력하기
 }
@@ -126,48 +119,81 @@ GLvoid Keyboarddown(unsigned char key, int x, int y)
 {
 	switch (key)
 	{
+	case '0':
+		target = corns[0];
+		break;
+
 	case '1':
-		_1 = !_1;
-		_2 = false;
-		_3 = false;
+		target = corns[1];
 		break;
 
 	case '2':
+		target = corns[2];
 		break;
 
 	case '3':
+		target = corns[3];
 		break;
 
-	case 't': // 조명 온오프
+	case '4':
+		target = corns[4];
+		break;
+
+	case '5':
+		target = corns[5];
+		break;
+
+	case 'r': // 조명 공전
+		_r = !_r;
+		break;
+
+	case 's': // 눈
+		for (Object*& o : snows)
+		{
+			o->SetMove(1, 200.0f);
+			o->isMoving = true;
+		}
+		_s = !_s;
+		break;
+
+	case 'm': // 조명 온오프
 		light_onf = !light_onf;
 		break;
 
-	case 'y': // 카메라 양의방향 공전
+	case 'p': // 조명을 옮긴다?
+		cadfadrg = (cadfadrg + 1) % 4;
+		lightPos = pts[cadfadrg];
 		break;
 
-	case 'Y': // 카메라 음의방향 공전
+	case 'n': // 가까워지기
+		_distance -= 5.0f;
 		break;
 
-	case '+': // 속도증가
+	case 'f': // 멀어지기
+		_distance += 5.0f;
 		break;
 
-	case '-': // 속도감소
+	case '+': 
+		light_hardness = min(1.0f, light_hardness + 0.5f);
+		break;
+
+	case '-': 
+		light_hardness = max(0.0f, light_hardness - 0.5f);
 		break;
 
 	case 'c': // 조명 색 바꾸기
 		lightColor = { uidC(dre), uidC(dre), uidC(dre) };
 		break;
 
-	case 'r':
+	case '9':
 		Reset();
 		break;
 		
-	case 'p': // 직각투영?
-		proj = glm::mat4(1.0f);
-		proj = glm::ortho(-50.0f, 50.0f, -50.0f, 50.0f, -50.0f, 50.0f);
-		break;
-
 	case 'q': // 프로그램 종료
+		delete stage;
+		for (Object*& o : snows)
+			delete o;
+		snows.clear();
 		exit(0);
 		break;
 	}
@@ -184,16 +210,47 @@ GLvoid Keyboardup(unsigned char key, int x, int y)
 
 GLvoid TimerFunction(int value)
 {
-	if (_1)
+	lightbox.SetMove(0, lightPos.x);
+	lightbox.SetMove(1, lightPos.y);
+	lightbox.SetMove(2, lightPos.z);
+
+	if (_r)
 	{
-		for (auto& i : v)
-			for (auto& j : i)
-				j->ani1();
+		lightangle += RA;
+		lightPos = { _distance * glm::cos(glm::radians(lightangle)), _distance, _distance * glm::sin(glm::radians(lightangle)) };
 	}
 
-	for (auto& i : v)
-		for (auto& j : i)
-			j->Update();
+	if (_s)
+	{
+		for (Object*& o : snows)
+		{
+			if (o->isMoving && o->T.y <= 0.0f)
+			{
+				o->SetMove(1, 0.0f);
+				o->isMoving = false;
+			}
+			else if (!o->isMoving)
+			{
+				o->count += 1;
+				if (o->count == 20)
+				{
+					o->count = 0;
+					o->SetMove(1, 200.0f);
+					o->isMoving = true;
+				}
+			}
+			else
+				o->SnowMove();
+		}
+	}
+
+	for (Object*& o : snows)
+		o->Update();
+	lightbox.Update();
+	stage->Update();
+
+	for (Object*& o : corns)
+		o->Update();
 
 	glutPostRedisplay();
 	glutTimerFunc(50, TimerFunction, 1);

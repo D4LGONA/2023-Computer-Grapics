@@ -27,9 +27,59 @@ Object::Object(const char* c, GLuint sh, glm::vec3 s = { 1.0f, 1.0f, 1.0f }, glm
 {
 	Readobj(c);
 	
-	speed = uidC(dre) * 2.0f;
-	max_size = uidC(dre) * 50.0f;
-	min_size = uidC(dre) * 10.0f;
+	speed = uidC(dre);
+}
+
+Object::Object(const char* c, GLuint sh, glm::vec3 color, int sz)
+	: ShaderProgram(sh), objColor(color)
+{
+	S = { 50.0f, 50.0f, 50.0f };
+	R = { 0.0f, 0.0f, 0.0f };
+	T = { 0.0f, 12.6f, 0.0f };
+
+	Readobj(c);
+
+	vector<glm::vec3> tmp;
+	for (int i = 0; i < sz; ++i)
+	{
+		for (int j = 0; j < v.size() - 12; j += 6)
+		{
+			tmp.push_back(v[j]);
+			tmp.push_back(v[j+1]);
+			tmp.push_back({ (v[j].x + v[j+2].x) / 2.0f, (v[j].y + v[j+2].y) / 2.0f, (v[j].z + v[j+2].z) / 2.0f });
+			tmp.push_back(v[j+1]);
+			tmp.push_back({ (v[j].x + v[j+4].x) / 2.0f, (v[j].y + v[j+4].y) / 2.0f, (v[j].z + v[j+4].z) / 2.0f });
+			tmp.push_back(v[j+1]);
+
+			tmp.push_back(v[j+2]);
+			tmp.push_back(v[j+1]);
+			tmp.push_back({ (v[j+2].x + v[j+4].x) / 2.0f, (v[j+2].y + v[j+4].y) / 2.0f, (v[j+2].z + v[j+4].z) / 2.0f });
+			tmp.push_back(v[j+1]);
+			tmp.push_back({ (v[j+2].x + v[j].x) / 2.0f, (v[j+2].y + v[j].y) / 2.0f, (v[j+2].z + v[j].z) / 2.0f });
+			tmp.push_back(v[j+1]);
+
+			tmp.push_back(v[j+4]);
+			tmp.push_back(v[j+1]);
+			tmp.push_back({ (v[j+4].x + v[j].x) / 2.0f, (v[j+4].y + v[j].y) / 2.0f, (v[j+4].z + v[j].z) / 2.0f });
+			tmp.push_back(v[j+1]);
+			tmp.push_back({ (v[j+4].x + v[j+2].x) / 2.0f, (v[j+4].y + v[j+2].y) / 2.0f, (v[j+4].z + v[j+2].z) / 2.0f });
+			tmp.push_back(v[j+1]);
+		}
+		for (int k = 0; k < 12; ++k)
+			tmp.push_back(v[v.size() - 12 + k]);
+		v.clear();
+		v = tmp;
+		tmp.clear();
+	}
+
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * v.size(), v.data(), GL_STATIC_DRAW);
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 2 * sizeof(glm::vec3), (void*)0); //--- 위치 속성
+	glEnableVertexAttribArray(0);
+
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 2 * sizeof(glm::vec3), (void*)(sizeof(glm::vec3))); //--- 노말 속성
+	glEnableVertexAttribArray(1);
 }
 
 void Object::Update()
@@ -64,7 +114,9 @@ void Object::Render()
 	unsigned int viewLocation = glGetUniformLocation(ShaderProgram, "view");
 	unsigned int projLocation = glGetUniformLocation(ShaderProgram, "projection");
 	unsigned int isLightLocation = glGetUniformLocation(ShaderProgram, "isLight");
+	unsigned int LightLocation = glGetUniformLocation(ShaderProgram, "ambientLight");
 	glUniform1i(isLightLocation, light_onf);
+	glUniform1f(LightLocation, light_hardness);
 
 	glEnableVertexAttribArray(PosLocation); // Enable 필수! 사용하겠단 의미
 	glEnableVertexAttribArray(NormalLocation);
@@ -78,7 +130,7 @@ void Object::Render()
 	glUniformMatrix4fv(projLocation, 1, GL_FALSE, &proj[0][0]);
 	
 	for (int i = 0; i < v.size(); i += 3)
-		glDrawArrays(GL_TRIANGLES, i, 3);
+		glDrawArrays(GL_POLYGON, i, 3);
 
 	glDisableVertexAttribArray(PosLocation); // Disable 필수!
 	glDisableVertexAttribArray(NormalLocation);
@@ -209,36 +261,8 @@ void Object::RotByPoint(int n, bool b, glm::vec3 o)
 	else rotByAngle[n] -= 5.0f;
 }
 
-void Object::ani1()
+void Object::makeTriangle(int n)
 {
-	if (be_large)
-	{
-		S.y += speed;
-		T.y += speed / 2.0f;
-		if (S.y > max_size)
-		{
-			S.y = max_size;
-			T.y = max_size / 2.0f;
-			be_large = !be_large;
-		}
-	}
-	else
-	{
-		S.y -= speed;
-		T.y -= speed / 2.0f;
-		if (S.y < min_size)
-		{
-			S.y = min_size;
-			T.y = min_size / 2.0f;
-			be_large = !be_large;
-		}
-	}
-}
-
-void Object::ani2()
-{
-	
-
 }
 
 void Object::InitBuffer()

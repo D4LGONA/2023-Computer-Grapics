@@ -18,13 +18,13 @@ class Object
 	glm::mat4 matrix = glm::mat4(1.0f); // 전체 행렬 녀석
 	glm::vec3 S{ 1.0f,1.0f,1.0f }; // 크기
 	glm::vec3 R{ 0.0f,0.0f,0.0f }; // 회전 ([0] - x, [1] - y, [2] - z) 축으로 얼마나 회전 할지
-	glm::vec3 T{ 0.0f,0.0f,0.0f }; // 이동
 
 	glm::vec3 origin{ 0.0f, 0.0f, 0.0f }; // 물체가 기본도형 여러 개 붙은 녀석일 때, 부속 도형들의 원점을 정해주는 것 
 	glm::vec3 rotBy{ 0.0f, 0.0f, 0.0f }; // 공전 등을 구현할 때 한 점을 기준으로 회전하는 것
 	glm::vec3 rotByAngle{ 0.0f, 0.0f, 0.0f }; // rotTo 기준 회전 각도
 
 public:
+	glm::vec3 T{ 0.0f,0.0f,0.0f }; // 이동
 	// obb에서 사용하는 녀석들 // 
 	glm::vec3 vCenterPos = { 0.0f, 0.0f, 0.0f }; // 상자 중앙의 좌표
 	glm::vec3 vAxisDir[3] = { {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f, 1.0f} }; //상자에 평행한 세 축의 단위벡터
@@ -40,12 +40,12 @@ public:
 
 	// 이동 관련 //
 	float speed = 0.0f;
-	float max_size = 0.0f;
-	float min_size = 0.0f;
-	bool be_large = true;
+	bool isMoving = true;
+	int count = 0;
 
 	// 여기부터
 	Object(const char*, GLuint, glm::vec3, glm::vec3, glm::vec3, glm::vec3);
+	Object(const char*, GLuint, glm::vec3, int);
 	Object() {}
 	~Object() {}
 	void InitBuffer(); // 생성자 안에 무조건 넣습니다
@@ -63,6 +63,6 @@ public:
 	void SetMove(int n, float value) { T[n] = value; }
 	glm::vec3 GetRot() { return R; }
 
-	void ani1();
-	void ani2();
+	void SnowMove() { T.y -= speed * 10.0f; }
+	void makeTriangle(int n);
 };

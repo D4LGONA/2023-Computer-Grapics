@@ -13,6 +13,7 @@ glm::vec3 cameraAngle = { 0.0f, 0.0f, 0.0f };
 glm::vec3 lightPos = { 0.0f, 100.0f, 100.0f };
 glm::vec3 lightColor = {1.0f, 1.0f, 1.0f};
 bool light_onf = true;
+float light_hardness = 0.3f;
 
 pair<float, float> WintoOpenGL(POINT pt)
 {
