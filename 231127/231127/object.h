@@ -7,7 +7,6 @@ class Object
 	GLuint vao;
 	GLuint ShaderProgram;
 
-
 	vector<glm::vec3> v; // 정점 정보 + 바운딩 박스 정보, size - 8 해서 원래 객체의 정점만 가져오기
 	vector<glm::vec3> c; // 색 정보 
 	vector<glm::vec3> n; // 노말 값
@@ -60,6 +59,7 @@ public:
 	void Rot(int n, float value) { R[n] += value; } // 객체 자체의 회전, R[n]의 값을 value 만큼 변경
 	void RotByPoint(int n, bool b, glm::vec3 o);
 	void SetRot(int n, float value) { R[n] = value; } // 객체 자체의 회전을 주어진 값 을 변경
+	void SetRotPoint(int n, float value, glm::vec3 o) { rotByAngle[n] = value; rotBy = o; } // 객체 자체의 회전을 주어진 값 을 변경
 	void SetMove(int n, float value) { T[n] = value; }
 	glm::vec3 GetRot() { return R; }
 

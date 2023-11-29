@@ -29,6 +29,9 @@ int h_count = 0;
 bool _1 = false;
 bool _2 = false;
 bool _3 = false;
+int timertime = 50;
+
+bool drag = false;
 
 // 전체 사이즈는 무조건 50*50으로 고정합니다. 그래서 x와 z scale이 달라질 수 있습니다.
 void Reset()
@@ -95,7 +98,7 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	glutKeyboardFunc(Keyboarddown);
 	glutKeyboardUpFunc(Keyboardup);
 	Reset();
-	glutTimerFunc(50, TimerFunction, 1);
+	glutTimerFunc(timertime, TimerFunction, 1);
 	glutMainLoop();
 }
 
@@ -149,9 +152,11 @@ GLvoid Keyboarddown(unsigned char key, int x, int y)
 		break;
 
 	case '+': // 속도증가
+		timertime = max(timertime - 1, 0);
 		break;
 
 	case '-': // 속도감소
+		timertime = min(timertime + 1, 200);
 		break;
 
 	case 'c': // 조명 색 바꾸기
@@ -196,22 +201,66 @@ GLvoid TimerFunction(int value)
 			j->Update();
 
 	glutPostRedisplay();
-	glutTimerFunc(50, TimerFunction, 1);
+	glutTimerFunc(timertime, TimerFunction, 1);
 }
 
 GLvoid Mouse(int button, int state, int x, int y)
 {
 	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
 	{
+		drag = true;
+
+		glm::vec3 ray_origin = glm::unProject(glm::vec3(x, HEIGHT - y, 0.0f), view, proj, glm::vec4(0, 0, WIDTH, HEIGHT));
+		glm::vec3 ray_direction = glm::normalize(glm::unProject(glm::vec3(x, HEIGHT - y, 1.0f), view, proj, glm::vec4(0, 0, WIDTH, HEIGHT)) - ray_origin);
+
+		for (auto& i : v)
+		{
+			for (auto& j : i)
+			{
+				if (obb_ray(*j, ray_origin, ray_direction))
+				{
+					j->isSelected = true;
+					break;
+				}
+			}
+		}
 	}
 	else if (button == GLUT_LEFT_BUTTON && state == GLUT_UP)
 	{
+		drag = false;
+		for (auto& i : v)
+		{
+			for (auto& j : i)
+			{
+				j->isSelected = false;
+			}
+		}
 	}
+	mousept = { x, y };
 	return GLvoid();
 }
 
 GLvoid Motion(int x, int y)
 {
+	if (drag)
+	{
+		//glm::vec3 ray_origin = glm::unProject(glm::vec3(x, HEIGHT - y, 0.0f), view, proj, glm::vec4(0, 0, WIDTH, HEIGHT));
+		//glm::vec3 ray_direction = glm::normalize(glm::unProject(glm::vec3(x, HEIGHT - y, 1.0f), view, proj, glm::vec4(0, 0, WIDTH, HEIGHT)) - ray_origin);
+
+		for (auto& i : v)
+		{
+			for (auto& j : i)
+			{
+				if (j->isSelected)
+				{
+					//pair<float, float> glpt = { WintoOpenGL({ x, y }).first - WintoOpenGL(mousept).first, WintoOpenGL({ x, y }).second - WintoOpenGL(mousept).second };
+					j->Move(1, x - mousept.x);
+				}
+			}	
+		}
+		mousept = { x, y };
+	}
+
 	glutPostRedisplay();
 }
 

@@ -25,6 +25,7 @@ POINT mousept;
 Object* stage;
 vector<Object*> corns;
 vector<Object*> snows;
+vector<Object*> spheres;
 
 Object lightbox;
 
@@ -41,6 +42,12 @@ int cadfadrg = -1;
 
 void Reset()
 {
+	for (int i = 0; i < 3; ++i)
+		spheres.push_back(new Object("sphere.obj", shaderProgramID, { 10.0f, 10.0f, 10.0f }, { 0.0f, 30.0f * i, 0.0f }, { 30.0f, 0.0f, 0.0f }, { uidC(dre), uidC(dre), uidC(dre) }));
+
+	spheres[1]->SetRotPoint(1, 30.0f, {0.0f, 0.0f, 0.0f});
+	spheres[2]->SetRotPoint(1, 60.0f, {0.0f, 0.0f, 0.0f});
+
 	for (int i = 0; i < 6; ++i)
 		corns.push_back(new Object("corn.obj", shaderProgramID, { 0.0f, 1.0f, 1.0f }, i));
 	target = corns[0];
@@ -100,6 +107,8 @@ GLvoid drawScene()
 	glEnable(GL_DEPTH_TEST); 
 
 	for (Object*& o : snows)
+		o->Render();
+	for (Object*& o : spheres)
 		o->Render();
 
 	stage->Render();
@@ -193,6 +202,12 @@ GLvoid Keyboarddown(unsigned char key, int x, int y)
 		delete stage;
 		for (Object*& o : snows)
 			delete o;
+		for (Object*& o : corns)
+			delete o;
+		for (Object*& o : spheres)
+			delete o;
+		spheres.clear();
+		corns.clear();
 		snows.clear();
 		exit(0);
 		break;
@@ -213,6 +228,13 @@ GLvoid TimerFunction(int value)
 	lightbox.SetMove(0, lightPos.x);
 	lightbox.SetMove(1, lightPos.y);
 	lightbox.SetMove(2, lightPos.z);
+
+	for (Object*& o : spheres)
+	{
+		/*o->RotByPoint(0, true, {0.0f, 0.0f, 0.0f});
+		o->RotByPoint(1, true, {0.0f, 0.0f, 0.0f});*/
+		o->RotByPoint(2, true, {0.0f, 0.0f, 0.0f});
+	}
 
 	if (_r)
 	{
@@ -250,6 +272,9 @@ GLvoid TimerFunction(int value)
 	stage->Update();
 
 	for (Object*& o : corns)
+		o->Update();
+
+	for (Object*& o : spheres)
 		o->Update();
 
 	glutPostRedisplay();

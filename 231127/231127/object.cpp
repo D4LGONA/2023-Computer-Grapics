@@ -241,13 +241,13 @@ void Object::UpdateMatrix()
 
 	// 한 점을 기준으로 이동
 	matrix = glm::translate(matrix, rotBy);
-	matrix = glm::rotate(matrix, glm::radians(rotByAngle.z), { 0.0f, 0.0f, 1.0f });
-	matrix = glm::rotate(matrix, glm::radians(rotByAngle.y), { 0.0f, 1.0f, 0.0f });
 	matrix = glm::rotate(matrix, glm::radians(rotByAngle.x), { 1.0f, 0.0f, 0.0f });
+	matrix = glm::rotate(matrix, glm::radians(rotByAngle.y), { 0.0f, 1.0f, 0.0f });
+	matrix = glm::rotate(matrix, glm::radians(rotByAngle.z), { 0.0f, 0.0f, 1.0f });
 	matrix = glm::translate(matrix, -rotBy);
 
 	// 자체 이동
-	matrix = glm::translate(matrix, T + rotBy);
+	matrix = glm::translate(matrix, T + origin);
 	matrix = glm::rotate(matrix, glm::radians(R.x), { 1.0f, 0.0f, 0.0f });
 	matrix = glm::rotate(matrix, glm::radians(R.y), { 0.0f, 1.0f, 0.0f });
 	matrix = glm::rotate(matrix, glm::radians(R.z), { 0.0f, 0.0f, 1.0f });
@@ -257,8 +257,8 @@ void Object::UpdateMatrix()
 void Object::RotByPoint(int n, bool b, glm::vec3 o)
 {
 	rotBy = o;
-	if (b) rotByAngle[n] += 5.0f;
-	else rotByAngle[n] -= 5.0f;
+	if (b) rotByAngle[n] += speed * 10.0f;
+	else rotByAngle[n] -= speed * 10.0f;
 }
 
 void Object::makeTriangle(int n)
