@@ -43,6 +43,7 @@ public:
 	float max_size = 0.0f;
 	float min_size = 0.0f;
 	bool be_large = true;
+	bool falling = false;
 
 	// 여기부터
 	Object(const char*, GLuint, glm::vec3, glm::vec3, glm::vec3, glm::vec3);
@@ -61,8 +62,15 @@ public:
 	void RotByPoint(int n, bool b, glm::vec3 o);
 	void SetRot(int n, float value) { R[n] = value; } // 객체 자체의 회전을 주어진 값 을 변경
 	void SetMove(int n, float value) { T[n] = value; }
+	void SetScale(int n, float value) { S[n] = value; T[n] = S[n] / 2.0f; }
+	float GetScale(int n) { return S[n]; }
 	glm::vec3 GetRot() { return R; }
 
 	void ani1();
 	void ani2();
+	void ani3();
+	void dragging(float);
+	void set_ani1() { speed = uidC(dre) * 2.0f; max_size = uidMax(dre); min_size = uidMin(dre); }
+	void set_ani2(int, float);
+	void set_ani3() { S.y = 10.0f; T.y = S.y / 2.0f; }
 };

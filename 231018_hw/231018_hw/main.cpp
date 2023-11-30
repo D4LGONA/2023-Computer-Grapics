@@ -147,12 +147,12 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 
 	case '+':
 		if(timertime > 0)
-			timertime--;
+			timertime-= 5;
 		break;
 
 	case '-':
 		if (timertime < 100)
-			timertime++;
+			timertime+=5;
 		break;
 
 	case 'q': // 프로그램 종료

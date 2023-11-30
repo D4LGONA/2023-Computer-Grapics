@@ -1,5 +1,7 @@
 #include "stdafx.h"
 #include "object.h"
+#include <queue>
+#include <tuple>
 
 GLchar* vertexSource, * fragmentSource; //--- 소스코드 저장 변수
 GLuint vertexShader, fragmentShader; //--- 세이더 객체
@@ -32,6 +34,59 @@ bool _3 = false;
 int timertime = 50;
 
 bool drag = false;
+float movingY = 0.0f;
+
+bool falling = false;
+
+pair<bool, bool> spinCamera = {false, false};
+//float dy = 0.0f;
+
+pair<int, int> selectedIdx = { -1, -1 };
+
+int dx[] = { 0, 1, 0, -1 };
+int dy[] = { 1, 0, -1, 0 };
+
+void search_neighbors(int i, int j, float s) {
+
+	std::vector<std::vector<bool>> visited(v.size(), std::vector<bool>(v[0].size(), false));
+	std::queue<std::tuple<int, int, float>> q;
+
+	q.push(std::make_tuple(i, j, s));
+	visited[i][j] = true;
+
+	while (!q.empty()) {
+		auto current = q.front();
+		q.pop();
+
+		int cx = std::get<0>(current);
+		int cy = std::get<1>(current);
+		float cs = std::get<2>(current);
+
+		for (int k = 0; k < 4; k++) {
+			int nx = cx + dx[k];
+			int ny = cy + dy[k];
+
+			if (nx >= 0 && nx < v.size() && ny >= 0 && ny < v[0].size() && !visited[nx][ny]) {
+				visited[nx][ny] = true;
+				if (cs >= 0.0f)
+				{
+					if (v[nx][ny]->GetScale(1) <= cs) {
+						v[nx][ny]->SetScale(1, cs);
+						q.push(std::make_tuple(nx, ny, cs * 0.9f)); // Decrease 's'
+					}
+				}
+				else
+				{
+					if (v[nx][ny]->GetScale(1) > cs) {
+						v[nx][ny]->SetScale(1, cs);
+						q.push(std::make_tuple(nx, ny, cs * 0.9f)); // 
+					}
+				}
+				
+			}
+		}
+	}
+}
 
 // 전체 사이즈는 무조건 50*50으로 고정합니다. 그래서 x와 z scale이 달라질 수 있습니다.
 void Reset()
@@ -62,8 +117,7 @@ void Reset()
 		}
 	}
 
-
-	cameraPos = glm::vec3(0.0f, 100.0f, 100.0f); //--- 카메라 위치
+	cameraPos = glm::vec3(0.0f, 150.0f, 150.0f); //--- 카메라 위치
 	cameraDirection = glm::vec3(0.0f, 0.0f, 0.0f); //--- 카메라 바라보는 방향
 	cameraUp = glm::vec3(0.0f, 1.0f, 0.0f); //--- 카메라 위쪽 방향
 	view = glm::mat4(1.0f);
@@ -133,12 +187,39 @@ GLvoid Keyboarddown(unsigned char key, int x, int y)
 		_1 = !_1;
 		_2 = false;
 		_3 = false;
+		for (int i = 0; i < v.size(); ++i)
+			for (int j = 0; j < v[i].size(); ++j)
+			{
+				v[i][j]->set_ani1();
+				v[i][j]->falling = false;
+			}
 		break;
 
 	case '2':
+	{
+		_1 = false;
+		_2 = !_2;
+		_3 = false;
+		float _ss = 50.0f / float(w_count);
+		for (int i = 0; i < v.size(); ++i)
+			for (int j = 0; j < v[i].size(); ++j)
+			{
+				v[i][j]->set_ani2(j, _ss);
+				v[i][j]->falling = false;
+			}
 		break;
+	}
 
 	case '3':
+		_1 = false;
+		_2 = false;
+		_3 = !_3;
+		for (int i = 0; i < v.size(); ++i)
+			for (int j = 0; j < v[i].size(); ++j)
+			{
+				v[i][j]->set_ani3();
+				v[i][j]->falling = false;
+			}
 		break;
 
 	case 't': // 조명 온오프
@@ -146,9 +227,17 @@ GLvoid Keyboarddown(unsigned char key, int x, int y)
 		break;
 
 	case 'y': // 카메라 양의방향 공전
+		if (spinCamera.first && !spinCamera.second)
+			spinCamera.first = false;
+		spinCamera.first = !spinCamera.first;
+		spinCamera.second = true;
 		break;
 
 	case 'Y': // 카메라 음의방향 공전
+		if (spinCamera.first && spinCamera.second)
+			spinCamera.first = false;
+		spinCamera.first = !spinCamera.first;
+		spinCamera.second = true;
 		break;
 
 	case '+': // 속도증가
@@ -189,11 +278,43 @@ GLvoid Keyboardup(unsigned char key, int x, int y)
 
 GLvoid TimerFunction(int value)
 {
+	if (spinCamera.first)
+	{ 
+		if (spinCamera.second)
+		{
+			cameraAngle.y += 2.0f;
+		}
+		else
+		{
+			cameraAngle.y -= 2.0f;
+		}
+	}
+
 	if (_1)
 	{
 		for (auto& i : v)
 			for (auto& j : i)
 				j->ani1();
+	}
+
+	if (_2)
+	{
+		for (int i = 0; i < v.size(); ++i)
+		{
+			for (int j = 0; j < v[i].size(); ++j)
+			{
+				v[i][j]->ani2();
+			}
+		}
+	}
+
+	for (int i = 0; i < v.size(); ++i)
+	{
+		for (int j = 0; j < v[i].size(); ++j)
+		{
+			if (v[i][j]->falling)
+				v[i][j]->ani3();
+		}
 	}
 
 	for (auto& i : v)
@@ -206,61 +327,89 @@ GLvoid TimerFunction(int value)
 
 GLvoid Mouse(int button, int state, int x, int y)
 {
-	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
+	if (_3)
 	{
-		drag = true;
-
-		glm::vec3 ray_origin = glm::unProject(glm::vec3(x, HEIGHT - y, 0.0f), view, proj, glm::vec4(0, 0, WIDTH, HEIGHT));
-		glm::vec3 ray_direction = glm::normalize(glm::unProject(glm::vec3(x, HEIGHT - y, 1.0f), view, proj, glm::vec4(0, 0, WIDTH, HEIGHT)) - ray_origin);
-
-		for (auto& i : v)
+		if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
 		{
-			for (auto& j : i)
+			drag = true;
+
+			glm::vec3 ray_origin = glm::unProject(glm::vec3(x, HEIGHT - y, 0.0f), view, proj, glm::vec4(0, 0, WIDTH, HEIGHT));
+			glm::vec3 ray_direction = glm::normalize(glm::unProject(glm::vec3(x, HEIGHT - y, 1.0f), view, proj, glm::vec4(0, 0, WIDTH, HEIGHT)) - ray_origin);
+
+
+			for (int i = 0; i < v.size(); ++i)
 			{
-				if (obb_ray(*j, ray_origin, ray_direction))
+				for (int j = 0; j < v[i].size(); ++j)
 				{
-					j->isSelected = true;
-					break;
+					if (obb_ray(*v[i][j], ray_origin, ray_direction))
+					{
+						selectedIdx = { i, j };
+						v[i][j]->isSelected = true;
+						//dy = v[i][j]->GetScale(1);
+						break;
+					}
 				}
 			}
 		}
-	}
-	else if (button == GLUT_LEFT_BUTTON && state == GLUT_UP)
-	{
-		drag = false;
-		for (auto& i : v)
+		else if (button == GLUT_LEFT_BUTTON && state == GLUT_UP)
 		{
-			for (auto& j : i)
+			drag = false;
+			selectedIdx = { -1, -1 };
+			for (auto& i : v)
 			{
-				j->isSelected = false;
+				for (auto& j : i)
+				{
+					j->isSelected = false;
+				}
+			}
+
+			for (auto& i : v)
+			{
+				for (auto& j : i)
+				{
+					j->falling = true;
+					j->be_large = false;
+					j->min_size = 10.0f;
+					j->max_size = j->GetScale(1) * 0.5f;
+					j->speed = 0.0f;
+				}
 			}
 		}
+		mousept = { x, y };
 	}
-	mousept = { x, y };
 	return GLvoid();
 }
 
 GLvoid Motion(int x, int y)
 {
-	if (drag)
+	if(_3)
 	{
-		//glm::vec3 ray_origin = glm::unProject(glm::vec3(x, HEIGHT - y, 0.0f), view, proj, glm::vec4(0, 0, WIDTH, HEIGHT));
-		//glm::vec3 ray_direction = glm::normalize(glm::unProject(glm::vec3(x, HEIGHT - y, 1.0f), view, proj, glm::vec4(0, 0, WIDTH, HEIGHT)) - ray_origin);
-
-		for (auto& i : v)
+		if (drag)
 		{
-			for (auto& j : i)
-			{
-				if (j->isSelected)
-				{
-					//pair<float, float> glpt = { WintoOpenGL({ x, y }).first - WintoOpenGL(mousept).first, WintoOpenGL({ x, y }).second - WintoOpenGL(mousept).second };
-					j->Move(1, x - mousept.x);
-				}
-			}	
-		}
-		mousept = { x, y };
-	}
+			if (selectedIdx.first == -1) return;
 
+			pair<int, int> idx = {-1, -1};
+			glm::vec3 ray_origin = glm::unProject(glm::vec3(x, HEIGHT - y, 0.0f), view, proj, glm::vec4(0, 0, WIDTH, HEIGHT));
+			glm::vec3 ray_direction = glm::normalize(glm::unProject(glm::vec3(x, HEIGHT - y, 1.0f), view, proj, glm::vec4(0, 0, WIDTH, HEIGHT)) - ray_origin);
+
+			movingY += (mousept.y - y) / 5.0f;
+
+			for (int i = 0; i < v.size(); ++i)
+			{
+				for (int j = 0; j < v[i].size(); ++j)
+				{
+					if (v[i][j]->isSelected)
+					{
+						idx = { i, j };
+						v[i][j]->dragging((mousept.y - y) / 5.0f);
+					}
+				}
+			}
+			
+			search_neighbors(idx.first, idx.second, v[idx.first][idx.second]->GetScale(1) * 0.9f);
+			mousept = { x, y };
+		}
+	}
 	glutPostRedisplay();
 }
 

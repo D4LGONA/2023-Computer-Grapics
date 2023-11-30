@@ -42,8 +42,11 @@ int cadfadrg = -1;
 
 void Reset()
 {
+
 	for (int i = 0; i < 3; ++i)
-		spheres.push_back(new Object("sphere.obj", shaderProgramID, { 10.0f, 10.0f, 10.0f }, { 0.0f, 30.0f * i, 0.0f }, { 30.0f, 0.0f, 0.0f }, { uidC(dre), uidC(dre), uidC(dre) }));
+	{
+		spheres.push_back(new Object("sphere.obj", shaderProgramID, { 10.0f + i * 2.0f, 10.0f + i * 2.0f, 10.0f + i * 2.0f }, { 0.0f, 30.0f * i, 0.0f }, { 30.0f + i * 5.0f, 0.0f, 0.0f }, { uidC(dre), uidC(dre), uidC(dre) }));
+	}
 
 	spheres[1]->SetRotPoint(1, 30.0f, {0.0f, 0.0f, 0.0f});
 	spheres[2]->SetRotPoint(1, 60.0f, {0.0f, 0.0f, 0.0f});

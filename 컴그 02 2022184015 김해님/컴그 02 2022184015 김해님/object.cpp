@@ -28,8 +28,8 @@ Object::Object(const char* c, GLuint sh, glm::vec3 s = { 1.0f, 1.0f, 1.0f }, glm
 	Readobj(c);
 	
 	speed = uidC(dre) * 2.0f;
-	max_size = uidC(dre) * 50.0f;
-	min_size = uidC(dre) * 10.0f;
+	max_size = uidMax(dre);
+	min_size = uidMin(dre);
 }
 
 void Object::Update()
@@ -46,6 +46,13 @@ void Object::Update()
 void Object::Render()
 {
 	glBindVertexArray(vao);
+
+	view = glm::lookAt(cameraPos, cameraDirection, cameraUp);
+	view = glm::translate(view, +cameraDirection);
+	view = glm::rotate(view, glm::radians(cameraAngle.x), { 1.0f, 0.0f, 0.0f });
+	view = glm::rotate(view, glm::radians(cameraAngle.y), { 0.0f, 1.0f, 0.0f });
+	view = glm::rotate(view, glm::radians(cameraAngle.z), { 0.0f, 0.0f, 1.0f });
+	view = glm::translate(view, -cameraDirection);
 
 	unsigned int lightPosLocation = glGetUniformLocation(ShaderProgram, "lightPos"); //--- lightPos 값 전달: (0.0, 0.0, 5.0);
 	glUniform3f(lightPosLocation, lightPos.x, lightPos.y, lightPos.z);
@@ -214,7 +221,7 @@ void Object::ani1()
 	if (be_large)
 	{
 		S.y += speed;
-		T.y += speed / 2.0f;
+		T.y = S.y / 2.0f;
 		if (S.y > max_size)
 		{
 			S.y = max_size;
@@ -225,7 +232,7 @@ void Object::ani1()
 	else
 	{
 		S.y -= speed;
-		T.y -= speed / 2.0f;
+		T.y = S.y / 2.0f;
 		if (S.y < min_size)
 		{
 			S.y = min_size;
@@ -237,8 +244,80 @@ void Object::ani1()
 
 void Object::ani2()
 {
-	
+	if (be_large)
+	{
+		S.y += speed;
+		T.y = S.y / 2.0f;
+		if (S.y > max_size)
+		{
+			S.y = max_size;
+			T.y = max_size / 2.0f;
+			be_large = !be_large;
+		}
+	}
+	else
+	{
+		S.y -= speed;
+		T.y = S.y / 2.0f;
+		if (S.y < min_size)
+		{
+			S.y = min_size;
+			T.y = min_size / 2.0f;
+			be_large = !be_large;
+		}
+	}
+}
 
+void Object::ani3()
+{
+	if (be_large)
+	{
+		speed += 0.1f;
+		S.y += speed;
+		T.y = S.y / 2.0f;
+
+		if (S.y > max_size)
+		{
+			speed *= 0.5f;
+			be_large = !be_large;
+			max_size = max(0.5f * max_size, 10.0f);
+		}
+	}
+	else
+	{
+		speed -= 0.1f;
+		S.y += speed;
+		if (S.y < min_size)
+		{
+			speed *= 0.5f;
+			be_large = !be_large;
+		}
+	}
+	if (abs(speed) < 0.1f and abs(S.y - 10.0f) < 0.5f)
+	{
+		S.y = 10.0f;
+		speed = 0.0f;
+		falling = false;
+	}
+
+	T.y = S.y / 2.0f;
+}
+
+void Object::dragging(float a)
+{
+	S.y += a;
+	T.y = S.y / 2.0f;
+	speed = 0.0f;
+}
+
+void Object::set_ani2(int n, float ss)
+{
+	S.y = n * ss;
+	T.y = S.y / 2.0f;
+	be_large = true;
+	speed = 2.0f;
+	max_size = 70.0f;
+	min_size = 0.0f;
 }
 
 void Object::InitBuffer()
@@ -255,6 +334,4 @@ void Object::InitBuffer()
 
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 2 * sizeof(glm::vec3), (void*)(sizeof(glm::vec3))); //--- 노말 속성
 	glEnableVertexAttribArray(1);
-
-	
 }

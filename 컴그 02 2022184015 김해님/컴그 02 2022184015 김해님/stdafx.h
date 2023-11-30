@@ -31,6 +31,8 @@ extern glm::vec3 cameraAngle;
 extern glm::vec3 lightPos;
 extern glm::vec3 lightColor;
 extern bool light_onf;
+extern std::uniform_real_distribution<float> uidMax;
+extern std::uniform_real_distribution<float> uidMin;
 
 pair<float, float> WintoOpenGL(POINT pt);
 float dist(glm::vec3 p1, glm::vec3 p2);
