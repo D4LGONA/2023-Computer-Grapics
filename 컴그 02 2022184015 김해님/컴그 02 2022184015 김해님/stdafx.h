@@ -23,6 +23,7 @@ extern std::random_device rd;
 extern std::mt19937 dre;
 extern std::uniform_real_distribution<float> uidC;
 extern glm::mat4 proj;
+extern glm::mat4 viewportproj;
 extern glm::vec3 cameraPos;
 extern glm::vec3 cameraDirection;
 extern glm::vec3 cameraUp;

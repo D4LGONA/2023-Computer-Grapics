@@ -320,6 +320,24 @@ void Object::set_ani2(int n, float ss)
 	min_size = 0.0f;
 }
 
+void Object::be_falling()
+{
+	speed += 0.5f;
+	T.y -= speed;
+
+	if (T.y <= 5.0f)
+	{
+		T.y = 5.0f;
+		speed *= -0.7f;
+		if (abs(speed) < 0.1f)
+		{
+			falling = false;
+			S.y = 10.0f;
+			T.y = S.y / 2.0f;
+		}
+	}
+}
+
 void Object::InitBuffer()
 {
 	glGenVertexArrays(1, &vao);

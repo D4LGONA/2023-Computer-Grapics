@@ -38,8 +38,9 @@ float movingY = 0.0f;
 
 bool falling = false;
 
+bool start = false;
+
 pair<bool, bool> spinCamera = {false, false};
-//float dy = 0.0f;
 
 pair<int, int> selectedIdx = { -1, -1 };
 
@@ -91,6 +92,7 @@ void search_neighbors(int i, int j, float s) {
 // 전체 사이즈는 무조건 50*50으로 고정합니다. 그래서 x와 z scale이 달라질 수 있습니다.
 void Reset()
 {
+	start = false;
 	if (v.size() != 0)
 	{
 		for (auto& i : v)
@@ -113,9 +115,10 @@ void Reset()
 		v.push_back(vector<Object*>());
 		for (int j = 0; j < w_count; ++j)
 		{
-			v[i].push_back(new Object("cube.obj", shaderProgramID, { s_X, 1.0f, s_Z }, { 0.0f, 0.0f, 0.0f }, {-25.0f + (j * s_X) + s_X / 2.0f, 0.0f, 25.0f - (i * s_Z) - s_Z / 2.0f}, {1.0f, 0.0f, 1.0f}));
+			v[i].push_back(new Object("cube.obj", shaderProgramID, { s_X, 10.0f, s_Z }, { 0.0f, 0.0f, 0.0f }, {-25.0f + (j * s_X) + s_X / 2.0f, 200.0f, 25.0f - (i * s_Z) - s_Z / 2.0f}, {1.0f, 0.0f, 1.0f}));
 		}
 	}
+
 
 	cameraPos = glm::vec3(0.0f, 150.0f, 150.0f); //--- 카메라 위치
 	cameraDirection = glm::vec3(0.0f, 0.0f, 0.0f); //--- 카메라 바라보는 방향
@@ -131,6 +134,8 @@ void Reset()
 	view = glm::rotate(view, glm::radians(cameraAngle.z), { 0.0f, 0.0f, 1.0f });
 	view = glm::rotate(view, glm::radians(cameraAngle.y), { 0.0f, 1.0f, 0.0f });
 	view = glm::rotate(view, glm::radians(cameraAngle.x), { 1.0f, 0.0f, 0.0f });
+
+	start = true;
 }
 
 void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
@@ -165,11 +170,20 @@ GLvoid drawScene()
 	glEnable(GL_DEPTH_TEST); 
 
 
+	glViewport(0, 0, 800, 800);
 	for (auto& i : v)
 	{
 		for (auto& j : i)
 			j->Render();
 	}
+
+	glViewport(725, 725, 50, 50);
+	for (auto& i : v)
+	{
+		for (auto& j : i)
+			j->Render();
+	}
+
 
 	glutSwapBuffers(); //--- 화면에 출력하기
 }
@@ -278,16 +292,47 @@ GLvoid Keyboardup(unsigned char key, int x, int y)
 
 GLvoid TimerFunction(int value)
 {
+	if (start)
+	{
+		bool flag = true;
+		for (auto& i : v)
+		{
+			for (auto& j : i)
+			{
+				if (j->falling)
+				{
+					j->be_falling();
+					flag = false;
+				}
+			}
+		}
+
+		if (flag)
+		{
+			for (auto& i : v)
+				for (auto& j : i)
+					j->falling = false;
+			start = false;
+		}
+	}
+	else
+	{
+		for (int i = 0; i < v.size(); ++i)
+		{
+			for (int j = 0; j < v[i].size(); ++j)
+			{
+				if (v[i][j]->falling)
+					v[i][j]->ani3();
+			}
+		}
+	}
+
 	if (spinCamera.first)
 	{ 
 		if (spinCamera.second)
-		{
 			cameraAngle.y += 2.0f;
-		}
 		else
-		{
 			cameraAngle.y -= 2.0f;
-		}
 	}
 
 	if (_1)
@@ -308,14 +353,7 @@ GLvoid TimerFunction(int value)
 		}
 	}
 
-	for (int i = 0; i < v.size(); ++i)
-	{
-		for (int j = 0; j < v[i].size(); ++j)
-		{
-			if (v[i][j]->falling)
-				v[i][j]->ani3();
-		}
-	}
+	
 
 	for (auto& i : v)
 		for (auto& j : i)

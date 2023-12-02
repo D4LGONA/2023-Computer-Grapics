@@ -43,7 +43,7 @@ public:
 	float max_size = 0.0f;
 	float min_size = 0.0f;
 	bool be_large = true;
-	bool falling = false;
+	bool falling = true;
 
 	// 여기부터
 	Object(const char*, GLuint, glm::vec3, glm::vec3, glm::vec3, glm::vec3);
@@ -72,5 +72,6 @@ public:
 	void dragging(float);
 	void set_ani1() { speed = uidC(dre) * 2.0f; max_size = uidMax(dre); min_size = uidMin(dre); }
 	void set_ani2(int, float);
-	void set_ani3() { S.y = 10.0f; T.y = S.y / 2.0f; }
+	void set_ani3() { S.y = 10.0f; T.y = S.y / 2.0f; speed = 0.0f; }
+	void be_falling();
 };
