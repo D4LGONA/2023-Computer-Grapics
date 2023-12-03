@@ -24,7 +24,6 @@ char* filetobuf(const char*);
 POINT mousept;
 vector<vector<Object*>> v;
 
-bool spinLight = false;
 int w_count = 0;
 int h_count = 0;
 
@@ -36,8 +35,6 @@ int timertime = 50;
 bool drag = false;
 float movingY = 0.0f;
 
-bool falling = false;
-
 bool start = false;
 
 pair<bool, bool> spinCamera = {false, false};
@@ -46,6 +43,8 @@ pair<int, int> selectedIdx = { -1, -1 };
 
 int dx[] = { 0, 1, 0, -1 };
 int dy[] = { 1, 0, -1, 0 };
+
+glm::vec3 tPos;
 
 void search_neighbors(int i, int j, float s) {
 
@@ -69,18 +68,18 @@ void search_neighbors(int i, int j, float s) {
 
 			if (nx >= 0 && nx < v.size() && ny >= 0 && ny < v[0].size() && !visited[nx][ny]) {
 				visited[nx][ny] = true;
-				if (cs >= 0.0f)
+				if (cs >= 10.0)
 				{
 					if (v[nx][ny]->GetScale(1) <= cs) {
 						v[nx][ny]->SetScale(1, cs);
-						q.push(std::make_tuple(nx, ny, cs * 0.9f)); // Decrease 's'
+						q.push(std::make_tuple(nx, ny, cs * 0.9f));
 					}
 				}
 				else
 				{
 					if (v[nx][ny]->GetScale(1) > cs) {
 						v[nx][ny]->SetScale(1, cs);
-						q.push(std::make_tuple(nx, ny, cs * 0.9f)); // 
+						q.push(std::make_tuple(nx, ny, cs * 0.9f));
 					}
 				}
 				
@@ -104,6 +103,27 @@ void Reset()
 		v.clear();
 	}
 
+	light_onf = true;
+	lightColor = { 1.0f, 1.0f, 1.0f };
+	spinCamera = { false, false };
+	selectedIdx = { -1, -1 };
+	timertime = 50;
+	_1 = false;
+	_2 = false;
+	_3 = false;
+
+	system("cls");
+	cout << "1: 애니메이션 1" << endl;
+	cout << "2: 애니메이션 2" << endl;
+	cout << "3: 애니메이션 3" << endl;
+	cout << "t: 조명을 켠다/끈다" << endl;
+	cout << "c: 조명 색을 바꾼다" << endl;
+	cout << "y/Y: 카메라가 바닥의 y축을 기준으로 양/음 방향으로 회전한다" << endl;
+	cout << "+/-: 육면체 이동하는 속도 증가/감소" << endl;
+	cout << "r: 모든 값 초기화" << endl;
+	cout << "q: 프로그램 종료" << endl;
+
+
 	cout << "가로, 세로 개수 값을 입력하세요: ";
 	cin >> w_count >> h_count;
 
@@ -121,6 +141,7 @@ void Reset()
 
 
 	cameraPos = glm::vec3(0.0f, 150.0f, 150.0f); //--- 카메라 위치
+	tPos = cameraPos;
 	cameraDirection = glm::vec3(0.0f, 0.0f, 0.0f); //--- 카메라 바라보는 방향
 	cameraUp = glm::vec3(0.0f, 1.0f, 0.0f); //--- 카메라 위쪽 방향
 	view = glm::mat4(1.0f);
@@ -171,18 +192,45 @@ GLvoid drawScene()
 
 
 	glViewport(0, 0, 800, 800);
+	proj = glm::mat4(1.0f);
+	proj = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 200.0f); //--- 투영 공간 설정: fovy, aspect, near, far
+	proj = glm::translate(proj, glm::vec3(0.0, 0.0, 30.0f));
+	cameraPos = tPos;
+	cameraUp = { 0.0f, 1.0f, 0.0f };
 	for (auto& i : v)
 	{
 		for (auto& j : i)
 			j->Render();
 	}
 
-	glViewport(725, 725, 50, 50);
+	glViewport(675, 675, 100, 100);
+	proj = glm::mat4(1.0f);
+	proj = glm::ortho(-40.0f, 40.0f, -40.0f, 40.0f, -200.0f, 200.0f);
+	cameraPos = { 0.0f, 100.0f, 0.0f };
+	cameraUp = { 0.0f, 0.0f, -1.0f };
 	for (auto& i : v)
 	{
 		for (auto& j : i)
 			j->Render();
 	}
+
+	// 다시 원래대로 돌려넣기 위함
+	glViewport(0, 0, 800, 800);
+	proj = glm::mat4(1.0f);
+	proj = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 200.0f); //--- 투영 공간 설정: fovy, aspect, near, far
+	proj = glm::translate(proj, glm::vec3(0.0, 0.0, 30.0f));
+	cameraPos = tPos;
+	cameraUp = { 0.0f, 1.0f, 0.0f };
+	view = glm::lookAt(cameraPos, cameraDirection, cameraUp);
+	view = glm::translate(view, +cameraDirection);
+	view = glm::rotate(view, glm::radians(cameraAngle.x), { 1.0f, 0.0f, 0.0f });
+	view = glm::rotate(view, glm::radians(cameraAngle.y), { 0.0f, 1.0f, 0.0f });
+	view = glm::rotate(view, glm::radians(cameraAngle.z), { 0.0f, 0.0f, 1.0f });
+	view = glm::translate(view, -cameraDirection);
+	unsigned int viewLocation = glGetUniformLocation(shaderProgramID, "view");
+	unsigned int projLocation = glGetUniformLocation(shaderProgramID, "projection");
+	glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &view[0][0]);
+	glUniformMatrix4fv(projLocation, 1, GL_FALSE, &proj[0][0]);
 
 
 	glutSwapBuffers(); //--- 화면에 출력하기
@@ -271,8 +319,7 @@ GLvoid Keyboarddown(unsigned char key, int x, int y)
 		break;
 		
 	case 'p': // 직각투영?
-		proj = glm::mat4(1.0f);
-		proj = glm::ortho(-50.0f, 50.0f, -50.0f, 50.0f, -50.0f, 50.0f);
+		
 		break;
 
 	case 'q': // 프로그램 종료
