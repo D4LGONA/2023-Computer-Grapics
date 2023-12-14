@@ -68,21 +68,13 @@ void search_neighbors(int i, int j, float s) {
 
 			if (nx >= 0 && nx < v.size() && ny >= 0 && ny < v[0].size() && !visited[nx][ny]) {
 				visited[nx][ny] = true;
-				if (cs >= 10.0)
+				if (cs >= 10.0f)
 				{
 					if (v[nx][ny]->GetScale(1) <= cs) {
 						v[nx][ny]->SetScale(1, cs);
 						q.push(std::make_tuple(nx, ny, cs * 0.9f));
 					}
 				}
-				else
-				{
-					if (v[nx][ny]->GetScale(1) > cs) {
-						v[nx][ny]->SetScale(1, cs);
-						q.push(std::make_tuple(nx, ny, cs * 0.9f));
-					}
-				}
-				
 			}
 		}
 	}

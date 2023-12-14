@@ -13,6 +13,7 @@ class Object
 	vector<glm::vec3> uv; // 텍스쳐 uv
 	vector<unsigned int> i; // 인덱스 정보, size - 
 	vector<unsigned int> ni;
+	bool blending = false;
 
 	glm::mat4 matrix = glm::mat4(1.0f); // 전체 행렬 녀석
 	glm::vec3 S{ 1.0f,1.0f,1.0f }; // 크기
@@ -32,7 +33,7 @@ public:
 	// // // // // // // // //
 
 	// 조명 관련 //
-	glm::vec3 objColor{ 1.0f, 1.0f, 1.0f };
+	glm::vec4 objColor{ 1.0f, 1.0f, 1.0, 1.0f };
 
 	// 피킹 관련 //
 	bool isSelected = false;
@@ -43,7 +44,7 @@ public:
 	int count = 0;
 
 	// 여기부터
-	Object(const char*, GLuint, glm::vec3, glm::vec3, glm::vec3, glm::vec3);
+	Object(const char*, GLuint, glm::vec3, glm::vec3, glm::vec3, glm::vec3, bool);
 	Object(const char*, GLuint, glm::vec3, int);
 	Object() {}
 	~Object() {}

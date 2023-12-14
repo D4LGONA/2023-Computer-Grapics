@@ -22,8 +22,8 @@ void Object::UpdateBB()
 	}
 }
 
-Object::Object(const char* c, GLuint sh, glm::vec3 s = { 1.0f, 1.0f, 1.0f }, glm::vec3 r = { 0.0f, 0.0f, 0.0f }, glm::vec3 t = { 0.0f, 0.0f, 0.0f }, glm::vec3 color = {uidC(dre), uidC(dre), uidC(dre) })
-	: S{s}, R{r}, T{t}, ShaderProgram{sh}, objColor{color}
+Object::Object(const char* c, GLuint sh, glm::vec3 s = { 1.0f, 1.0f, 1.0f }, glm::vec3 r = { 0.0f, 0.0f, 0.0f }, glm::vec3 t = { 0.0f, 0.0f, 0.0f }, glm::vec3 color = { uidC(dre), uidC(dre), uidC(dre) }, bool b = false)
+	: S{s}, R{r}, T{t}, ShaderProgram{sh}, objColor{color, 0.0f}, blending{b}
 {
 	Readobj(c);
 	
@@ -31,7 +31,7 @@ Object::Object(const char* c, GLuint sh, glm::vec3 s = { 1.0f, 1.0f, 1.0f }, glm
 }
 
 Object::Object(const char* c, GLuint sh, glm::vec3 color, int sz)
-	: ShaderProgram(sh), objColor(color)
+	: ShaderProgram(sh), objColor(color, 0.0f)
 {
 	S = { 50.0f, 50.0f, 50.0f };
 	R = { 0.0f, 0.0f, 0.0f };
@@ -95,6 +95,11 @@ void Object::Update()
 
 void Object::Render()
 {
+	if (blending)
+		glEnable(GL_BLEND);
+	else
+		glDisable(GL_BLEND);
+
 	glBindVertexArray(vao);
 
 	unsigned int lightPosLocation = glGetUniformLocation(ShaderProgram, "lightPos"); //--- lightPos 값 전달: (0.0, 0.0, 5.0);
@@ -130,7 +135,11 @@ void Object::Render()
 	glUniformMatrix4fv(projLocation, 1, GL_FALSE, &proj[0][0]);
 	
 	for (int i = 0; i < v.size(); i += 3)
+	{
+		if(blending)
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glDrawArrays(GL_POLYGON, i, 3);
+	}
 
 	glDisableVertexAttribArray(PosLocation); // Disable 필수!
 	glDisableVertexAttribArray(NormalLocation);

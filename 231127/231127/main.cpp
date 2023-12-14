@@ -26,6 +26,7 @@ Object* stage;
 vector<Object*> corns;
 vector<Object*> snows;
 vector<Object*> spheres;
+vector<Object*> cubes;
 
 Object lightbox;
 
